@@ -12,16 +12,16 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done
 
 **Goal:** Capture every design decision in this repo so future-me (and Claude) can pick up cold.
 
-- [ ] 0.1  Commit `CLAUDE.md` (already authored) at repo root
-- [ ] 0.2  Commit project brief as `docs/PROJECT_BRIEF.md`
-- [ ] 0.3  Write `docs/architecture.md` — the 5-layer diagram + process topology
-- [ ] 0.4  Write `docs/data-contracts.md` — pydantic model conventions, raw vs row split
-- [ ] 0.5  Write `docs/database-design.md` — schemas, tables, indexes, hypertable + retention policy, upsert SQL
-- [ ] 0.6  Write `docs/lakehouse-design.md` — Iceberg catalog, partition spec, overwrite semantics, snapshot policy
-- [ ] 0.7  Write `docs/api-design.md` — endpoint inventory, HTML/JSON split, caching, rate limiting
-- [ ] 0.8  Write `docs/infra-design.md` — Compose graph, Caddy/Cloudflare, Terraform, secrets, CI/CD
-- [ ] 0.9  Write `docs/decisions-log.md` — append-only one-liners; mirror the section in CLAUDE.md
-- [ ] 0.10 Initial commit + push to public GitHub repo
+- [x] 0.1  Commit `CLAUDE.md` (already authored) at repo root
+- [x] 0.2  Commit project brief as `docs/PROJECT_BRIEF.md`
+- [x] 0.3  Write `docs/architecture.md` — the 5-layer diagram + process topology
+- [x] 0.4  Write `docs/data-contracts.md` — pydantic model conventions, raw vs row split
+- [x] 0.5  Write `docs/database-design.md` — schemas, tables, indexes, hypertable + retention policy, upsert SQL
+- [x] 0.6  Write `docs/lakehouse-design.md` — Iceberg catalog, partition spec, overwrite semantics, snapshot policy
+- [x] 0.7  Write `docs/api-design.md` — endpoint inventory, HTML/JSON split, caching, rate limiting
+- [x] 0.8  Write `docs/infra-design.md` — Compose graph, Caddy/Cloudflare, Terraform, secrets, CI/CD
+- [x] 0.9  Write `docs/decisions-log.md` — append-only one-liners; mirror the section in CLAUDE.md
+- [x] 0.10 Initial commit + push to public GitHub repo
 
 **DoD:** Repo cloneable; a stranger can read the docs and explain the architecture.
 
