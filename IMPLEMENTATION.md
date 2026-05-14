@@ -32,12 +32,12 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done
 **Goal:** Push to `main` → something visible happens. The runway built.
 
 ### 1A. Repo scaffolding
-- [ ] 1.1  `pyproject.toml` with `uv`, Python 3.12, deps grouped (`ingestion`, `api`, `dev`)
-- [ ] 1.2  `.gitignore`, `.env.example`, `Makefile` (or `justfile`)
-- [ ] 1.3  Package skeleton: `gridpulse/{contracts,ingestion,storage,dagster_defs,api,lib}/__init__.py`
-- [ ] 1.4  `tests/{unit,integration,fixtures}/` with one trivial passing test
-- [ ] 1.5  `ruff` + `mypy` config; pre-commit hook
-- [ ] 1.6  README skeleton (architecture diagram placeholder, "live demo coming soon")
+- [x] 1.1  `pyproject.toml` with `uv`, Python 3.12, deps grouped (`ingestion`, `api`, `dev`)
+- [x] 1.2  `.gitignore`, `.env.example`, `Makefile` (or `justfile`)
+- [x] 1.3  Package skeleton: `gridpulse/{contracts,ingestion,storage,dagster_defs,api,lib}/__init__.py`
+- [x] 1.4  `tests/{unit,integration,fixtures}/` with one trivial passing test
+- [x] 1.5  `ruff` + `mypy` config; pre-commit hook
+- [x] 1.6  README skeleton (architecture diagram placeholder, "live demo coming soon")
 
 ### 1B. Local Docker Compose stack
 - [ ] 1.7  Multi-stage `Dockerfile` (`base` → `app` and `dagster` targets)
