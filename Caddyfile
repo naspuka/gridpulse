@@ -1,0 +1,24 @@
+# Caddyfile — local dev shape. Listens on :80 (HTTP).
+#
+# In prod (Phase 1D), we'll replace this with a hostname-based config that
+# does auto-TLS via Let's Encrypt for `gridpulse.uk` and basic-auth for
+# `dagster.gridpulse.uk`.
+
+{
+    # Turn off auto-https locally — we're on :80 only.
+    auto_https off
+    admin off
+}
+
+:80 {
+    encode gzip zstd
+
+    # Reverse proxy to FastAPI (Dagster runs separately on :3000 in dev).
+    reverse_proxy app:8000
+
+    log {
+        output stdout
+        format console
+        level INFO
+    }
+}

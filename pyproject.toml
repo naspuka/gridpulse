@@ -100,6 +100,14 @@ module = [
     "slowapi.*",
 ]
 ignore_missing_imports = true
+follow_imports = "skip"        # don't walk into them — strict-mypy is otherwise slow
+
+[[tool.mypy.overrides]]
+# Dagster glue code: trust Dagster's runtime, skip strict-typing the integration shims.
+module = "gridpulse.dagster_defs.*"
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_untyped_decorators = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

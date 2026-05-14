@@ -1,0 +1,106 @@
+# Local dev stack. `make up` brings the whole thing up.
+# Prod overlay (docker-compose.prod.yml) swaps build → image, adds TLS bits.
+# See docs/infra-design.md for the topology.
+
+name: gridpulse
+
+x-dagster-env: &dagster_env
+  DATABASE_URL: postgresql://${POSTGRES_USER:-gridpulse}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/${POSTGRES_DB:-gridpulse}
+  DAGSTER_HOME: /opt/dagster_home
+  SENTRY_DSN: ${SENTRY_DSN:-}
+  HEALTHCHECKS_BASE_URL: ${HEALTHCHECKS_BASE_URL:-}
+  R2_ENDPOINT: ${R2_ENDPOINT:-}
+  R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID:-}
+  R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY:-}
+  R2_BUCKET: ${R2_BUCKET:-gridpulse-lake}
+  ICEBERG_CATALOG_URI: ${ICEBERG_CATALOG_URI:-}
+  GIT_SHA: ${GIT_SHA:-dev}
+  ENVIRONMENT: ${ENVIRONMENT:-local}
+
+services:
+  postgres:
+    image: timescale/timescaledb:2.17.2-pg16
+    container_name: gridpulse-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-gridpulse}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_DB:-gridpulse}
+      TZ: UTC
+      PGTZ: UTC
+    ports:
+      - "127.0.0.1:5432:5432"        # localhost only — never internet
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-gridpulse} -d ${POSTGRES_DB:-gridpulse}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  app:
+    build:
+      context: .
+      target: app
+    container_name: gridpulse-app
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-gridpulse}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/${POSTGRES_DB:-gridpulse}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      GIT_SHA: ${GIT_SHA:-dev}
+      ENVIRONMENT: ${ENVIRONMENT:-local}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    expose:
+      - "8000"
+    restart: unless-stopped
+
+  dagster-webserver:
+    build:
+      context: .
+      target: dagster
+    container_name: gridpulse-dagster-web
+    command: ["dagster-webserver", "-h", "0.0.0.0", "-p", "3000", "-m", "gridpulse.dagster_defs"]
+    environment: *dagster_env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:3000:3000"        # direct access in dev; subdomain+auth in prod
+    volumes:
+      - dagster_home:/opt/dagster_home
+    restart: unless-stopped
+
+  dagster-daemon:
+    build:
+      context: .
+      target: dagster
+    container_name: gridpulse-dagster-daemon
+    command: ["dagster-daemon", "run", "-m", "gridpulse.dagster_defs"]
+    environment: *dagster_env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - dagster_home:/opt/dagster_home
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: gridpulse-caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  dagster_home:
+  caddy_data:
+  caddy_config:

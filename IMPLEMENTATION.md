@@ -40,12 +40,12 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done
 - [x] 1.6  README skeleton (architecture diagram placeholder, "live demo coming soon")
 
 ### 1B. Local Docker Compose stack
-- [ ] 1.7  Multi-stage `Dockerfile` (`base` → `app` and `dagster` targets)
-- [ ] 1.8  `docker-compose.yml` — postgres, app, dagster-webserver, dagster-daemon, caddy
-- [ ] 1.9  `Caddyfile` (local: HTTP only; prod overlay handles TLS)
-- [ ] 1.10 `gridpulse/storage/migrate.py` migrator + `001_extensions_and_schemas.sql`
-- [ ] 1.11 Stub FastAPI app with `/healthz` returning `{"status":"ok"}`
-- [ ] 1.12 Stub Dagster `Definitions()` (one no-op asset) so daemon boots clean
+- [x] 1.7  Multi-stage `Dockerfile` (`base` → `app` and `dagster` targets)
+- [x] 1.8  `docker-compose.yml` — postgres, app, dagster-webserver, dagster-daemon, caddy
+- [x] 1.9  `Caddyfile` (local: HTTP only; prod overlay handles TLS)
+- [x] 1.10 `gridpulse/storage/migrate.py` migrator + `001_extensions_and_schemas.sql`
+- [x] 1.11 Stub FastAPI app with `/healthz` returning `{"status":"ok"}`
+- [x] 1.12 Stub Dagster `Definitions()` (one no-op asset) so daemon boots clean
 
 ### 1C. Cloud infra via Terraform
 - [ ] 1.13 `terraform/` skeleton with hcloud + cloudflare providers pinned
