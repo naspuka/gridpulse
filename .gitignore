@@ -23,7 +23,8 @@ venv/
 *.tfstate.*
 *.tfvars
 !*.tfvars.example
-.terraform.lock.hcl
+plan.bin
+# (we DO commit .terraform.lock.hcl — provider version lock)
 
 # Dagster local state
 .dagster_home/

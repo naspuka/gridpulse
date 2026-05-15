@@ -48,13 +48,13 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done
 - [x] 1.12 Stub Dagster `Definitions()` (one no-op asset) so daemon boots clean
 
 ### 1C. Cloud infra via Terraform
-- [ ] 1.13 `terraform/` skeleton with hcloud + cloudflare providers pinned
-- [ ] 1.14 SSH key resource; CX32 server in `nbg1` or `fsn1`
-- [ ] 1.15 Hetzner firewall (22 from admin CIDR; 80/443 world)
-- [ ] 1.16 `cloud-init.yml` — Docker, ufw, fail2ban, unattended-upgrades
-- [ ] 1.17 Cloudflare A records: apex (proxied), www (proxied), `dagster.` (unproxied)
-- [ ] 1.18 R2 bucket `gridpulse-lake` + R2 API token (scoped read/write)
-- [ ] 1.19 `terraform apply` → box reachable on its IP
+- [x] 1.13 `terraform/` skeleton with hcloud + cloudflare providers pinned
+- [x] 1.14 SSH key resource; CAX21 server in `nbg1` (CX32 retired in 2026)
+- [x] 1.15 Hetzner firewall (22 from admin CIDR; 80/443 world)
+- [x] 1.16 `cloud-init.yml.tpl` — minimal (ubuntu user via templatefile) + `post-deploy.sh` for Docker/ufw/fail2ban
+- [x] 1.17 Cloudflare A records: apex (proxied), www (proxied), `dagster.` (unproxied)
+- [x] 1.18 R2 bucket `gridpulse-lake` (S3 keys created manually via dashboard)
+- [x] 1.19 `terraform apply` → box reachable on its IP, post-deploy.sh installs the stack
 
 ### 1D. CI/CD
 - [ ] 1.20 `.github/workflows/ci.yml` — lint, type-check, pytest, compose smoke test

@@ -1,0 +1,17 @@
+# Copy this to terraform.tfvars and fill in the real values.
+# terraform.tfvars is gitignored — never commit credentials.
+
+# Hetzner Cloud — Security → API Tokens → Read & Write
+hcloud_token = ""
+
+# Cloudflare — Profile → API Tokens → Custom token with
+#   Zone   → DNS → Edit   (scope: gridpulse.uk)
+#   Account → Workers R2 Storage → Edit (scope: your account)
+cloudflare_api_token  = ""
+cloudflare_account_id = ""
+cloudflare_zone_id    = ""
+
+# Optional overrides — defaults in variables.tf are usually fine.
+# server_location     = "nbg1"
+# admin_ip_cidrs      = ["0.0.0.0/0", "::/0"]
+# ssh_public_key_path = "~/.ssh/id_ed25519.pub"

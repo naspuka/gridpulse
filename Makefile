@@ -77,6 +77,24 @@ migrate: ## Apply database migrations
 deploy-check: ## Validate the merged Compose config (catches syntax errors)
 	docker compose -f docker-compose.yml -f docker-compose.prod.yml config
 
+.PHONY: tf-plan
+tf-plan: ## terraform plan (cwd: terraform/)
+	cd terraform && terraform plan
+
+.PHONY: tf-apply
+tf-apply: ## terraform apply (cwd: terraform/)
+	cd terraform && terraform apply
+
+.PHONY: post-deploy
+post-deploy: ## Install Docker/ufw/fail2ban on the box. Usage: make post-deploy IP=1.2.3.4
+	@test -n "$(IP)" || (echo "usage: make post-deploy IP=<server-ip>" && exit 1)
+	bash terraform/post-deploy.sh $(IP)
+
+.PHONY: ssh
+ssh: ## SSH to the prod box. Usage: make ssh IP=1.2.3.4
+	@test -n "$(IP)" || (echo "usage: make ssh IP=<server-ip>" && exit 1)
+	ssh ubuntu@$(IP)
+
 # ---- Help ----------------------------------------------------------------
 
 .PHONY: help

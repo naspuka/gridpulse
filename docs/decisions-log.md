@@ -44,6 +44,13 @@ This file mirrors the "Decisions log" section in [CLAUDE.md](../CLAUDE.md). When
 - **No staging environment in V1.** Smoke-tested deploys + easy rollback over staging at this stage.
 - **Plain `.env` for secrets in V1.** Doppler is a 1-evening swap if it ever becomes useful.
 
+## 2026-05 — Implementation reality checks
+
+- **Server type CAX21 (ARM) instead of CX32 (Intel).** Hetzner retired CX32 in some configurations by 2026. CAX21 is the closest equivalent — 4 vCPU / 8 GB / 80 GB at ~€6.49/mo (cheaper than CX32 was, with one more vCPU). Our Docker base images (`python:3.12-slim`, `timescale/timescaledb`, `caddy:2-alpine`) are all multi-arch so ARM is a no-op for application code.
+- **R2 must be enabled manually in the Cloudflare dashboard** before Terraform can create buckets — one-time clickwrap acceptance even on the Free plan. Documented in `terraform/README.md`.
+- **Dagster `@asset` decorator: omit the `context` type annotation in stubs.** The runtime validator does an identity check against its own context classes and rejects valid imports under some module-resolution paths. Real assets in Phase 2 will use the typed signature with confidence; throwaway stubs aren't worth the dance.
+- **Split cloud-init: bootstrap-only, app setup in post-deploy.sh.** Cloud-init failed silently three times on Hetzner — YAML parse errors abort user-data processing with no surfaced error, `users: - default` is silently overridden by Hetzner's image (`90-hetznercloud.cfg` resets the user list to `[root]`), and runcmd ordering issues lock you out before SSH is reachable for debugging. Resolution: minimal cloud-init that creates the ubuntu user (explicit definition with `templatefile()` injecting the public key) + installs `ca-certificates`/`curl` only. Everything else (Docker, ufw, fail2ban, unattended-upgrades-reboot policy) moved to `terraform/post-deploy.sh`, run interactively from the laptop after the box is up. Idempotent. Failures are visible and re-runnable. CLAUDE.md's "infra-design.md" doc still describes the unified flow — that's the aspiration; the current setup is the pragmatic reality.
+
 ## Format for future entries
 
 ```
