@@ -57,10 +57,10 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done
 - [x] 1.19 `terraform apply` → box reachable on its IP, post-deploy.sh installs the stack
 
 ### 1D. CI/CD
-- [ ] 1.20 `.github/workflows/ci.yml` — lint, type-check, pytest, compose smoke test
-- [ ] 1.21 `.github/workflows/deploy.yml` — build → GHCR → SSH → compose up
-- [ ] 1.22 GitHub repo secrets: `DEPLOY_HOST`, `DEPLOY_SSH_KEY`
-- [ ] 1.23 Hand-create `/etc/gridpulse/.env` on the box (chmod 600, root-owned)
+- [x] 1.20 `.github/workflows/ci.yml` — lint, type-check, pytest, compose smoke test
+- [x] 1.21 `.github/workflows/deploy.yml` — build → GHCR → SSH → compose up
+- [x] 1.22 GitHub repo secrets: `DEPLOY_HOST`, `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`
+- [x] 1.23 Hand-create `/etc/gridpulse/.env` on the box (chmod 640, root:ubuntu)
 - [ ] 1.24 First green deploy — `https://gridpulse.uk/healthz` returns 200
 
 **DoD:** Push to `main` → CI green → auto-deploy → `curl https://gridpulse.uk/healthz` returns `{"status":"ok"}`. Caddy auto-issued the cert. `dagster.gridpulse.uk` prompts basic auth.

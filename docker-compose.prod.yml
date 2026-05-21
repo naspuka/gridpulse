@@ -1,0 +1,47 @@
+# Prod overlay. Used with the base docker-compose.yml:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Differences vs local:
+# - app + dagster images pulled from GHCR (built in CI; the small box can't build comfortably)
+# - Caddyfile.prod replaces Caddyfile (TLS + dagster.gridpulse.uk subdomain)
+# - Compose reads /etc/gridpulse/.env (root-owned, chmod 600) on the box
+
+name: gridpulse
+
+services:
+  app:
+    image: ghcr.io/naspuka/gridpulse-app:${GIT_SHA:-latest}
+    build: !reset null
+    env_file: /etc/gridpulse/.env
+    environment:
+      ENVIRONMENT: production
+      GIT_SHA: ${GIT_SHA:-unknown}
+
+  dagster-webserver:
+    image: ghcr.io/naspuka/gridpulse-dagster:${GIT_SHA:-latest}
+    build: !reset null
+    env_file: /etc/gridpulse/.env
+    environment:
+      ENVIRONMENT: production
+      GIT_SHA: ${GIT_SHA:-unknown}
+      DAGSTER_HOME: /opt/dagster_home
+
+  dagster-daemon:
+    image: ghcr.io/naspuka/gridpulse-dagster:${GIT_SHA:-latest}
+    build: !reset null
+    env_file: /etc/gridpulse/.env
+    environment:
+      ENVIRONMENT: production
+      GIT_SHA: ${GIT_SHA:-unknown}
+      DAGSTER_HOME: /opt/dagster_home
+
+  caddy:
+    volumes:
+      # Swap the local Caddyfile for the prod one (TLS + dagster subdomain).
+      - ./Caddyfile.prod:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    env_file: /etc/gridpulse/.env
+
+  postgres:
+    env_file: /etc/gridpulse/.env

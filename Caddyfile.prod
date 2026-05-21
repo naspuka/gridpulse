@@ -1,0 +1,43 @@
+# Caddyfile — production. Caddy auto-issues TLS via Let's Encrypt for both
+# hostnames. The `dagster.` subdomain is NOT proxied through Cloudflare (DNS
+# is set `proxied = false` in Terraform) so ACME HTTP-01 reaches Caddy directly.
+
+{
+    # Email for Let's Encrypt account + expiry warnings.
+    email admin@gridpulse.uk
+}
+
+# --- Public site (apex + www, proxied via Cloudflare in front) ---
+gridpulse.uk, www.gridpulse.uk {
+    encode gzip zstd
+    reverse_proxy app:8000
+
+    # Static asset cache (FastAPI serves /static when we wire it up in Phase 5).
+    header /static/* Cache-Control "public, max-age=86400, immutable"
+
+    # HSTS once we're confident things are stable. Tighten later.
+    header Strict-Transport-Security "max-age=31536000; includeSubDomains"
+
+    log {
+        output stdout
+        format console
+        level INFO
+    }
+}
+
+# --- Dagster admin UI (basic-auth gated) ---
+dagster.gridpulse.uk {
+    basic_auth {
+        # bcrypt hash of the admin password, sourced from /etc/gridpulse/.env
+        # via the DAGSTER_BASIC_AUTH_HASH env var. Generate with:
+        #   docker run --rm caddy:2-alpine caddy hash-password --plaintext '<password>'
+        admin {env.DAGSTER_BASIC_AUTH_HASH}
+    }
+    reverse_proxy dagster-webserver:3000
+
+    log {
+        output stdout
+        format console
+        level INFO
+    }
+}

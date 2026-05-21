@@ -1,0 +1,122 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Cancel older runs on the same branch — saves CI minutes during rapid pushes.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  python:
+    name: Lint + type-check + test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    # Ephemeral Postgres for integration-style tests and migration runs.
+    services:
+      postgres:
+        image: timescale/timescaledb:2.17.2-pg16
+        env:
+          POSTGRES_USER: gridpulse
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: gridpulse
+          TZ: UTC
+          PGTZ: UTC
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U gridpulse -d gridpulse"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        run: uv python install ${{ env.PYTHON_VERSION }}
+
+      - name: Install deps (all groups)
+        run: uv sync --all-groups --frozen
+
+      - name: Ruff format (check)
+        run: uv run ruff format --check .
+
+      - name: Ruff lint
+        run: uv run ruff check .
+
+      - name: mypy (strict, gridpulse only)
+        run: uv run mypy gridpulse/
+
+      - name: Apply migrations
+        env:
+          DATABASE_URL: postgresql://gridpulse:testpass@localhost:5432/gridpulse
+        run: uv run python -m gridpulse.storage.migrate
+
+      - name: pytest
+        env:
+          DATABASE_URL: postgresql://gridpulse:testpass@localhost:5432/gridpulse
+        run: uv run pytest -v
+
+  compose-smoke:
+    name: docker compose smoke
+    runs-on: ubuntu-latest
+    needs: python
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Seed local .env
+        run: |
+          cp .env.example .env
+          # Replace placeholder password so DATABASE_URL connects.
+          sed -i 's/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=cipass/' .env
+          sed -i 's|^DATABASE_URL=.*|DATABASE_URL=postgresql://gridpulse:cipass@postgres:5432/gridpulse|' .env
+
+      - name: Bring up stack
+        run: docker compose up -d --build --wait --wait-timeout 120
+
+      - name: Curl /healthz via Caddy
+        run: |
+          for i in {1..15}; do
+            if curl --fail --silent --show-error http://localhost/healthz; then
+              echo
+              echo "/healthz OK"
+              exit 0
+            fi
+            echo "retry $i…"
+            sleep 3
+          done
+          echo "::error::healthz never returned 200"
+          exit 1
+
+      - name: Dump logs on failure
+        if: failure()
+        run: |
+          docker compose ps
+          docker compose logs --no-color --tail=200 > compose.log
+          cat compose.log
+
+      - name: Upload compose logs (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: compose-logs
+          path: compose.log
+          retention-days: 7
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v

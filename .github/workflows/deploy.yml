@@ -1,0 +1,130 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:   # manual trigger from the Actions tab
+
+# Don't queue multiple deploys; cancel the older one.
+concurrency:
+  group: deploy
+  cancel-in-progress: false   # do NOT cancel in-flight deploys mid-flight
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_OWNER: ${{ github.repository_owner }}   # naspuka
+  IMAGE_NAME: ${{ github.repository }}          # naspuka/gridpulse
+
+jobs:
+  # ------------------------------------------------------------------------
+  # 1. Build and push images to GHCR.
+  # ------------------------------------------------------------------------
+  build:
+    name: Build + push images
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      sha_tag: ${{ steps.meta.outputs.sha_tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compute tags
+        id: meta
+        run: echo "sha_tag=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up QEMU            # required for cross-arch (amd64 build → arm64 box)
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build + push app image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: app
+          platforms: linux/arm64           # Hetzner CAX21 is ARM
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-app:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-app:latest
+          cache-from: type=gha,scope=app
+          cache-to: type=gha,scope=app,mode=max
+
+      - name: Build + push dagster image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: dagster
+          platforms: linux/arm64
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-dagster:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-dagster:latest
+          cache-from: type=gha,scope=dagster
+          cache-to: type=gha,scope=dagster,mode=max
+
+  # ------------------------------------------------------------------------
+  # 2. Sync compose files to the box, pull images, restart stack.
+  # ------------------------------------------------------------------------
+  deploy:
+    name: Deploy to Hetzner
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
+
+      - name: Trust the box's host key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Sync compose files + Caddyfile
+        run: |
+          rsync -avz --delete \
+            docker-compose.yml docker-compose.prod.yml Caddyfile.prod \
+            ubuntu@${{ secrets.DEPLOY_HOST }}:/opt/gridpulse/
+
+      - name: Pull images + restart stack
+        run: |
+          # GIT_SHA is the only value the compose CLI needs in its own env
+          # (to resolve `image: ghcr.io/...:${GIT_SHA}`). Everything else
+          # flows into containers via Compose's `env_file:` directives.
+          ssh ubuntu@${{ secrets.DEPLOY_HOST }} \
+            "export GIT_SHA='${{ github.sha }}'; \
+             cd /opt/gridpulse && \
+             docker compose -f docker-compose.yml -f docker-compose.prod.yml pull && \
+             docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans && \
+             docker image prune -f >/dev/null && \
+             docker compose -f docker-compose.yml -f docker-compose.prod.yml ps"
+
+      - name: Smoke-test prod via public URL
+        run: |
+          for i in {1..20}; do
+            if curl --fail --silent --show-error https://gridpulse.uk/healthz; then
+              echo
+              echo "prod /healthz OK"
+              exit 0
+            fi
+            echo "retry $i…"
+            sleep 5
+          done
+          echo "::error::prod /healthz never returned 200"
+          exit 1
