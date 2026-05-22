@@ -25,6 +25,7 @@ from dagster import AssetExecutionContext, MaterializeResult, MetadataValue, ass
 
 from gridpulse.contracts.carbon_intensity import CarbonIntensityRow
 from gridpulse.ingestion.carbon_intensity import fetch_national, fetch_regional
+from gridpulse.lib.heartbeat import with_heartbeat
 from gridpulse.storage.postgres import upsert_carbon_intensity_rows
 
 
@@ -62,6 +63,7 @@ def _materialize_result(
     group_name="carbon_intensity",
     compute_kind="python",
 )
+@with_heartbeat("carbon_intensity_national")
 def carbon_intensity_national(context: AssetExecutionContext) -> MaterializeResult:
     rows = fetch_national()
     written = upsert_carbon_intensity_rows(rows)
@@ -77,6 +79,7 @@ def carbon_intensity_national(context: AssetExecutionContext) -> MaterializeResu
     group_name="carbon_intensity",
     compute_kind="python",
 )
+@with_heartbeat("carbon_intensity_regional")
 def carbon_intensity_regional(context: AssetExecutionContext) -> MaterializeResult:
     rows = fetch_regional()
     written = upsert_carbon_intensity_rows(rows)

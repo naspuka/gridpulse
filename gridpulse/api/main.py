@@ -11,6 +11,12 @@ from typing import Any
 import psycopg
 from fastapi import FastAPI
 
+from gridpulse.lib.observability import init_sentry
+
+# Init Sentry before constructing the app so request-handler exceptions get
+# captured. No-op if SENTRY_DSN isn't set (local dev friendly).
+init_sentry(component="api")
+
 app = FastAPI(title="GridPulse", version="0.1.0")
 
 

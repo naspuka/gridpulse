@@ -65,10 +65,17 @@ jobs:
           DATABASE_URL: postgresql://gridpulse:testpass@localhost:5432/gridpulse
         run: uv run python -m gridpulse.storage.migrate
 
-      - name: pytest
+      - name: pytest (unit)
         env:
           DATABASE_URL: postgresql://gridpulse:testpass@localhost:5432/gridpulse
-        run: uv run pytest -v
+        # `-m "not integration"` skips tests marked @pytest.mark.integration;
+        # those run in the next step against the same Postgres service.
+        run: uv run pytest -v -m "not integration"
+
+      - name: pytest (integration)
+        env:
+          DATABASE_URL: postgresql://gridpulse:testpass@localhost:5432/gridpulse
+        run: uv run pytest -v -m integration
 
   compose-smoke:
     name: docker compose smoke

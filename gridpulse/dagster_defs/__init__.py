@@ -2,7 +2,14 @@
 
 from dagster import AssetSelection, Definitions, ScheduleDefinition, define_asset_job
 
+from gridpulse.lib.observability import init_sentry
+
 from .assets import carbon_intensity_national, carbon_intensity_regional
+
+# Init Sentry on Dagster module import. The webserver, daemon, and each
+# spawned step subprocess all import this module, so each gets its own
+# SDK instance. No-op if SENTRY_DSN isn't set.
+init_sentry(component="dagster")
 
 # Both Carbon Intensity assets in one job — they hit the same source API and
 # share the same 30-min cadence, so it's tidier to run them together. Dagster
