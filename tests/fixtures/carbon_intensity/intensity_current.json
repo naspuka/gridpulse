@@ -1,0 +1,13 @@
+{
+    "data": [
+        {
+            "from": "2026-05-21T14:30Z",
+            "to": "2026-05-21T15:00Z",
+            "intensity": {
+                "forecast": 89,
+                "actual": 69,
+                "index": "low"
+            }
+        }
+    ]
+}

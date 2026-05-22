@@ -51,6 +51,15 @@ This file mirrors the "Decisions log" section in [CLAUDE.md](../CLAUDE.md). When
 - **Dagster `@asset` decorator: omit the `context` type annotation in stubs.** The runtime validator does an identity check against its own context classes and rejects valid imports under some module-resolution paths. Real assets in Phase 2 will use the typed signature with confidence; throwaway stubs aren't worth the dance.
 - **Split cloud-init: bootstrap-only, app setup in post-deploy.sh.** Cloud-init failed silently three times on Hetzner — YAML parse errors abort user-data processing with no surfaced error, `users: - default` is silently overridden by Hetzner's image (`90-hetznercloud.cfg` resets the user list to `[root]`), and runcmd ordering issues lock you out before SSH is reachable for debugging. Resolution: minimal cloud-init that creates the ubuntu user (explicit definition with `templatefile()` injecting the public key) + installs `ca-certificates`/`curl` only. Everything else (Docker, ufw, fail2ban, unattended-upgrades-reboot policy) moved to `terraform/post-deploy.sh`, run interactively from the laptop after the box is up. Idempotent. Failures are visible and re-runnable. CLAUDE.md's "infra-design.md" doc still describes the unified flow — that's the aspiration; the current setup is the pragmatic reality.
 
+## 2026-05 — Phase 2 (Carbon Intensity ingestion)
+
+- **Regional asset is a single materialisation, not partitioned per region.** The CI API's `/regional` endpoint returns all 14 DNO regions in one response; partitioning would mean making 14 identical API calls for the same payload (rude to the upstream + slower for us). The original plan in IMPLEMENTATION.md said "partitioned by region" — superseded.
+- **API revealed 18 regions, not 14.** Carbon Intensity returns 14 DNOs plus 4 rollups (England, Scotland, Wales, GB). The `to_rows()` method on the regional contract filters out the rollups (region_ids 15-18) — we get national-level data with `actual` from `/intensity` instead, and the country rollups are redundant.
+- **Regional rows always have `actual_gco2_per_kwh = NULL`.** The `/regional` endpoint does not expose realised values; only `forecast` + `index`. The COALESCE in our upsert ensures a later forecast-only fetch never wipes an existing realised value (for national rows).
+- **Dagster asset modules must NOT `from __future__ import annotations`.** Dagster's `_validate_context_type_hint` does an identity (`is`) check against its own context classes; deferred string annotations break it. This is the same gotcha we hit with the Phase 1B stub — now documented so it doesn't bite a third time.
+- **Schedule cron: `2,32 * * * *`** (i.e. 2 minutes past each half-hour). Gives the CI API time to publish the realised `actual` for the just-completed half-hour before we re-fetch it.
+- **Five extra fixtures captured per source.** Real API JSON committed under `tests/fixtures/carbon_intensity/` so contract drift surfaces as a CI failure on the next ingest. Loud > silent.
+
 ## Format for future entries
 
 ```

@@ -71,16 +71,16 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done
 
 **Goal:** Cron-driven Carbon Intensity pipeline runs autonomously; we know within minutes if it breaks.
 
-- [ ] 2.1  `gridpulse/contracts/carbon_intensity.py` — `RawResponse` + `Row` models
-- [ ] 2.2  `tests/fixtures/carbon_intensity_*.json` — captured real responses
-- [ ] 2.3  Unit tests: fixtures parse cleanly through pydantic models
-- [ ] 2.4  `gridpulse/ingestion/http.py` — shared `httpx` client + tenacity retry policy
-- [ ] 2.5  `gridpulse/ingestion/carbon_intensity.py` — fetch → validate → return `list[Row]`
-- [ ] 2.6  Migration `002_ref_dno_region.sql` + `003_seed_dno_region.sql`
-- [ ] 2.7  Migration `004_raw_carbon_intensity.sql` (hypertable, retention, PK upsert)
-- [ ] 2.8  `gridpulse/storage/postgres.py` — connection pool + upsert helper
-- [ ] 2.9  Dagster asset `carbon_intensity_national` — schedule every 30 min
-- [ ] 2.10 Dagster asset `carbon_intensity_regional` — partitioned by region, every 30 min
+- [x] 2.1  `gridpulse/contracts/carbon_intensity.py` — `RawResponse` + `Row` models
+- [x] 2.2  `tests/fixtures/carbon_intensity_*.json` — captured real responses
+- [x] 2.3  Unit tests: fixtures parse cleanly through pydantic models
+- [x] 2.4  `gridpulse/ingestion/http.py` — shared `httpx` client + tenacity retry policy
+- [x] 2.5  `gridpulse/ingestion/carbon_intensity.py` — fetch → validate → return `list[Row]`
+- [x] 2.6  Migration `002_ref_dno_region.sql` + `003_seed_dno_region.sql`
+- [x] 2.7  Migration `004_raw_carbon_intensity.sql` (hypertable, retention, PK upsert)
+- [x] 2.8  `gridpulse/storage/postgres.py` — connection pool + upsert helper
+- [x] 2.9  Dagster asset `carbon_intensity_national` — schedule every 30 min
+- [x] 2.10 Dagster asset `carbon_intensity_regional` — single asset (not per-region), every 30 min
 - [ ] 2.11 Healthchecks.io project + per-asset heartbeat URLs
 - [ ] 2.12 `@with_heartbeat` decorator on Dagster ops
 - [ ] 2.13 Sentry SDK init in app + Dagster code
