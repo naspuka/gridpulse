@@ -98,6 +98,7 @@ module = [
     "duckdb.*",
     "dbt.*",
     "slowapi.*",
+    "psycopg_pool.*",
 ]
 ignore_missing_imports = true
 follow_imports = "skip"        # don't walk into them — strict-mypy is otherwise slow

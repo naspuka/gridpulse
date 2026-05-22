@@ -23,11 +23,14 @@ Design notes:
 
 from dagster import AssetExecutionContext, MaterializeResult, MetadataValue, asset
 
+from gridpulse.contracts.carbon_intensity import CarbonIntensityRow
 from gridpulse.ingestion.carbon_intensity import fetch_national, fetch_regional
 from gridpulse.storage.postgres import upsert_carbon_intensity_rows
 
 
-def _materialize_result(rows_written: int, rows: list, source: str) -> MaterializeResult:
+def _materialize_result(
+    rows_written: int, rows: list[CarbonIntensityRow], source: str
+) -> MaterializeResult:
     """Common Dagster metadata so each run shows useful stats in the UI."""
     if not rows:
         return MaterializeResult(
