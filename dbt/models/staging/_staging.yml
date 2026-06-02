@@ -1,0 +1,41 @@
+version: 2
+
+# Light tests at the staging layer — most of the integrity work happens in
+# the source layer (where it asserts on raw.*) and in the mart layer (where
+# we test materialised output). Staging just confirms the views compile and
+# their natural keys remain stable.
+
+models:
+  - name: stg_carbon_intensity
+    description: Lower-cased intensity_index over raw.carbon_intensity.
+    columns:
+      - name: region_id
+        tests: [not_null]
+      - name: period_start_utc
+        tests: [not_null]
+      - name: intensity_index
+        tests:
+          - not_null
+          - accepted_values:
+              values: ["very low", "low", "moderate", "high", "very high"]
+
+  - name: stg_generation_mix
+    description: Wide → long pivot. 11 fuel rows per half-hour.
+    columns:
+      - name: period_start_utc
+        tests: [not_null]
+      - name: fuel
+        tests:
+          - not_null
+          - accepted_values:
+              values:
+                ["gas", "coal", "nuclear", "wind", "wind_emb", "hydro",
+                 "imports", "biomass", "other", "solar", "storage"]
+
+  - name: stg_agile_price
+    description: Pass-through over raw.agile_price.
+    columns:
+      - name: region_id
+        tests: [not_null]
+      - name: period_start_utc
+        tests: [not_null]

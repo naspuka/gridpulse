@@ -40,9 +40,7 @@ from gridpulse.storage.postgres import (
 
 def _materialize_result(
     rows_written: int,
-    rows: list[CarbonIntensityRow]
-    | list[NesoGenerationMixRow]
-    | list[AgilePriceRow],
+    rows: list[CarbonIntensityRow] | list[NesoGenerationMixRow] | list[AgilePriceRow],
     source: str,
 ) -> MaterializeResult:
     """Common Dagster metadata so each run shows useful stats in the UI."""

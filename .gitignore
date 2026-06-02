@@ -34,6 +34,12 @@ dagster_home/
 *.duckdb
 *.duckdb.wal
 
+# dbt — keep project + models + tests + macros + .yml; ignore artefacts.
+dbt/target/
+dbt/dbt_packages/
+dbt/logs/
+dbt/profiles.yml
+
 # IDE
 .idea/
 .vscode/

@@ -1,0 +1,85 @@
+version: 2
+
+# Source declarations point dbt at the raw tables Dagster writes to. Owning
+# them as `sources` (not models) means dbt can `freshness` them, generate
+# docs that link to lineage, and we keep raw table names out of model SQL.
+
+sources:
+  - name: raw
+    schema: raw
+    description: |
+      Landing tables written by Dagster ingestion assets. Idempotent natural-key
+      upserts; pydantic-validated on the way in.
+
+    tables:
+      - name: carbon_intensity
+        description: |
+          Half-hourly carbon intensity per region. region_id=0 is NATIONAL
+          (carries `actual` once the half-hour realises); 1..14 are DNO
+          regions (forecast-only per the upstream API).
+        columns:
+          - name: region_id
+            description: FK to ref.dno_region (0 = NATIONAL sentinel).
+            tests: [not_null]
+          - name: period_start_utc
+            description: Start of the half-hour, tz-aware UTC.
+            tests: [not_null]
+          - name: forecast_gco2_per_kwh
+            description: gCO₂/kWh forecast at ingest time.
+            tests: [not_null]
+          - name: actual_gco2_per_kwh
+            description: gCO₂/kWh realised; NULL for forecast periods and all regional rows.
+          - name: intensity_index
+            description: One of very low / low / moderate / high / very high.
+            tests:
+              - not_null
+              - accepted_values:
+                  values: ["very low", "low", "moderate", "high", "very high"]
+
+      - name: generation_mix
+        description: |
+          NESO half-hourly national generation mix. 11 fuel MW columns plus
+          NESO's own total + carbon intensity. WIND vs WIND_EMB are kept
+          separate; storage_mw is signed (negative = charging).
+        columns:
+          - name: period_start_utc
+            description: Half-hour start, tz-aware UTC. Natural key.
+            tests: [not_null, unique]
+          - name: total_generation_mw
+            tests: [not_null]
+          - name: neso_carbon_intensity_gco2_per_kwh
+            tests: [not_null]
+
+      - name: agile_price
+        description: |
+          Octopus Agile half-hourly unit rates per DNO region (1..14, no
+          NATIONAL). Both VAT variants kept explicitly.
+        columns:
+          - name: region_id
+            description: FK to ref.dno_region (1..14 only, no NATIONAL).
+            tests: [not_null]
+          - name: period_start_utc
+            tests: [not_null]
+          - name: price_pence_per_kwh_inc_vat
+            tests: [not_null]
+          - name: price_pence_per_kwh_exc_vat
+            tests: [not_null]
+
+  - name: ref
+    schema: ref
+    description: Reference dimensions (DNO regions, etc.). Hand-seeded; rarely changes.
+
+    tables:
+      - name: dno_region
+        description: |
+          Canonical 14 DNOs + NATIONAL sentinel. Holds source-system codes
+          (carbon_intensity_id, octopus_code) and URL slugs.
+        columns:
+          - name: region_id
+            tests: [not_null, unique]
+          - name: canonical_code
+            tests: [not_null, unique]
+          - name: slug
+            tests: [not_null, unique]
+          - name: name
+            tests: [not_null]

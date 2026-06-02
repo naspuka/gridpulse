@@ -1,0 +1,6 @@
+# dbt packages. dbt_utils gives us pivot/unpivot helpers + generic tests
+# (date_spine, row_count_diff, expression_is_true, etc.) we use in marts.
+
+packages:
+  - package: dbt-labs/dbt_utils
+    version: [">=1.3.0", "<2.0.0"]

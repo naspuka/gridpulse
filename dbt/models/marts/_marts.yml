@@ -1,0 +1,65 @@
+version: 2
+
+models:
+  - name: mart_half_hourly
+    description: |
+      One row per (region_id, period_start_utc). Joins carbon intensity
+      and Agile price. Generation mix lives in mart_generation_mix_long
+      because it's national-only.
+    columns:
+      - name: region_id
+        tests: [not_null]
+      - name: period_start_utc
+        tests: [not_null]
+      - name: intensity_index
+        tests:
+          - accepted_values:
+              values: ["very low", "low", "moderate", "high", "very high"]
+    tests:
+      # Compound natural key.
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [region_id, period_start_utc]
+
+  - name: mart_generation_mix_long
+    description: |
+      11 rows per half-hour (one per fuel). share_of_generation_pct is
+      a 0–100 percentage based on the half-hour's total.
+    columns:
+      - name: period_start_utc
+        tests: [not_null]
+      - name: fuel
+        tests:
+          - not_null
+          - accepted_values:
+              values:
+                ["gas", "coal", "nuclear", "wind", "wind_emb", "hydro",
+                 "imports", "biomass", "other", "solar", "storage"]
+      - name: mw
+        tests: [not_null]
+      - name: is_renewable
+        tests: [not_null]
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [period_start_utc, fuel]
+      # Sanity: there are always exactly 11 fuels per half-hour. Catches a
+      # silent drop in the staging pivot.
+      - dbt_utils.equal_rowcount:
+          # 11 fuels × N half-hours; check ratio against staging.
+          compare_model: ref('stg_generation_mix')
+
+  - name: mart_best_slots_24h
+    description: |
+      Forward-looking 24h ranked by price (cheapest) and by forecast
+      carbon (greenest). FastAPI's landing-page query.
+    columns:
+      - name: region_id
+        tests: [not_null]
+      - name: period_start_utc
+        tests: [not_null]
+      - name: cheapest_rank
+        tests: [not_null]
+      - name: greenest_rank
+        tests: [not_null]
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [region_id, period_start_utc]

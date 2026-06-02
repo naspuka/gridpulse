@@ -1,0 +1,34 @@
+name: gridpulse
+version: '1.0.0'
+config-version: 2
+
+# Profile name that matches profiles.yml. Each environment (dev, ci, prod)
+# overrides the connection details via env vars — there is only one profile.
+profile: gridpulse
+
+# Standard layout. Targets are where dbt drops compiled SQL + run artefacts;
+# both are gitignored.
+model-paths: ["models"]
+test-paths:  ["tests"]
+macro-paths: ["macros"]
+seed-paths:  ["seeds"]
+target-path: "target"
+clean-targets: ["target", "logs", "dbt_packages"]
+
+# Where models materialise, and how. Convention follows docs/database-design.md:
+#   staging.* — VIEWS (cheap, always fresh, light renames/types only).
+#   marts.*   — TABLES (refreshed after ingest; sub-millisecond reads for FastAPI).
+models:
+  gridpulse:
+    staging:
+      +schema: staging
+      +materialized: view
+    marts:
+      +schema: marts
+      +materialized: table
+      # We don't ship marts data via dbt seeds; it's all derived.
+
+# Quiet log files at the project root would clutter the repo. Override:
+log-path: "logs"
+
+# Per-model defaults can override these via {{ config(...) }} blocks.

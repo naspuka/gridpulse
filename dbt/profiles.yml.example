@@ -1,0 +1,25 @@
+# Copy this to profiles.yml (gitignored) for local dev, or set DBT_PROFILES_DIR
+# to point at a directory containing profiles.yml.
+#
+# Connection details come from env vars by default so the same file works for
+# local, CI, and prod — only the env values change.
+#
+# Run:
+#   DBT_PROFILES_DIR=./dbt uv run dbt build --project-dir dbt
+
+gridpulse:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host:     "{{ env_var('DBT_HOST',     'localhost') }}"
+      port:     "{{ env_var('DBT_PORT',     '5432') | as_number }}"
+      user:     "{{ env_var('DBT_USER',     'gridpulse') }}"
+      password: "{{ env_var('DBT_PASSWORD', 'changeme') }}"
+      dbname:   "{{ env_var('DBT_DBNAME',   'gridpulse') }}"
+      # `schema` here is dbt's _default_ schema; per-folder overrides in
+      # dbt_project.yml put models into staging.* and marts.*.
+      schema: marts
+      threads: 4
+      keepalives_idle: 60
+      sslmode: prefer
