@@ -77,6 +77,22 @@ jobs:
           DATABASE_URL: postgresql://gridpulse:testpass@localhost:5432/gridpulse
         run: uv run pytest -v -m integration
 
+      - name: dbt build (against the same ephemeral Postgres)
+        env:
+          DBT_HOST: localhost
+          DBT_PORT: "5432"
+          POSTGRES_USER: gridpulse
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: gridpulse
+        run: |
+          cp dbt/profiles.yml.example dbt/profiles.yml
+          uv run dbt deps --project-dir dbt --profiles-dir dbt
+          # `dbt build` = run models, then tests. Runs against the empty
+          # raw.* tables created by the migrations step — staging views
+          # compile, marts materialise (empty), tests on empty data
+          # pass for not-null/unique/accepted_values (vacuous truth).
+          uv run dbt build --project-dir dbt --profiles-dir dbt
+
   compose-smoke:
     name: docker compose smoke
     runs-on: ubuntu-latest

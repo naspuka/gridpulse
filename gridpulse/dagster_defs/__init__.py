@@ -10,6 +10,7 @@ from .assets import (
     carbon_intensity_regional,
     generation_mix,
 )
+from .dbt_assets import dbt_build
 
 # Init Sentry on Dagster module import. The webserver, daemon, and each
 # spawned step subprocess all import this module, so each gets its own
@@ -60,17 +61,42 @@ agile_price_daily_schedule = ScheduleDefinition(
 )
 
 
+# dbt build — pulled by an auto-materialise sensor downstream of every ingest.
+# Run it explicitly via the UI or on a slow cadence; for now, daily at 04:00 UTC
+# is enough (no marts in V1 are real-time-critical — FastAPI reads tables that
+# dbt refreshes). Phase 5 may tighten this when we have user-facing latency
+# requirements.
+_dbt_build_job = define_asset_job(
+    name="dbt_build",
+    selection=AssetSelection.assets(dbt_build),
+)
+dbt_build_daily_schedule = ScheduleDefinition(
+    name="dbt_build_daily",
+    job=_dbt_build_job,
+    cron_schedule="0 4 * * *",
+    execution_timezone="UTC",
+    description="Daily dbt build at 04:00 UTC. Manual triggers in the UI as needed.",
+)
+
+
 defs = Definitions(
     assets=[
         carbon_intensity_national,
         carbon_intensity_regional,
         generation_mix,
         agile_price,
+        dbt_build,
     ],
-    jobs=[_carbon_intensity_job, _generation_mix_job, _agile_price_job],
+    jobs=[
+        _carbon_intensity_job,
+        _generation_mix_job,
+        _agile_price_job,
+        _dbt_build_job,
+    ],
     schedules=[
         carbon_intensity_30min_schedule,
         generation_mix_30min_schedule,
         agile_price_daily_schedule,
+        dbt_build_daily_schedule,
     ],
 )

@@ -62,7 +62,16 @@ FROM base AS dagster
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-editable --no-dev --group ingestion
 
-ENV DAGSTER_HOME=/opt/dagster_home
+# dbt project lives at /app/dbt; the Dagster asset shells out to it.
+# Rename the env-var-driven profiles.yml.example → profiles.yml inside the
+# image so dbt finds it. profiles.yml itself is gitignored (so dev can drop
+# a personal one locally) but the .example is committed and complete.
+COPY dbt ./dbt
+RUN cp /app/dbt/profiles.yml.example /app/dbt/profiles.yml
+
+ENV DAGSTER_HOME=/opt/dagster_home \
+    DBT_PROJECT_DIR=/app/dbt \
+    DBT_PROFILES_DIR=/app/dbt
 RUN mkdir -p /opt/dagster_home
 
 EXPOSE 3000
