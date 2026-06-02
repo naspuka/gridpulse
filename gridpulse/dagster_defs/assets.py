@@ -21,6 +21,8 @@ Design notes:
   and string-form (deferred) annotations break it.
 """
 
+from typing import Any
+
 from dagster import AssetExecutionContext, MaterializeResult, MetadataValue, asset
 
 from gridpulse.contracts.carbon_intensity import CarbonIntensityRow
@@ -53,7 +55,10 @@ def _materialize_result(
         )
 
     latest_period = max(r.period_start_utc for r in rows).isoformat()
-    metadata: dict[str, MetadataValue] = {
+    # `MetadataValue` is generic in Dagster 1.13+; strict-mypy's
+    # disallow_any_generics rejects the bare form. Any is the right escape
+    # here — Dagster validates the actual value types at runtime.
+    metadata: dict[str, Any] = {
         "source": MetadataValue.text(source),
         "rows_written": MetadataValue.int(rows_written),
         "latest_period_utc": MetadataValue.text(latest_period),

@@ -11,9 +11,11 @@ dagster-dbt integration's per-model asset graph. Reasons:
 
 The asset depends on all three raw-table ingestion assets so that
 `dbt build` only runs after raw data is fresh.
-"""
 
-from __future__ import annotations
+Note: this module does NOT use `from __future__ import annotations` — same
+Dagster gotcha as assets.py, the validator does an `is`-check on the
+`context` annotation.
+"""
 
 import os
 import subprocess
