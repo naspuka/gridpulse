@@ -60,6 +60,14 @@ This file mirrors the "Decisions log" section in [CLAUDE.md](../CLAUDE.md). When
 - **Schedule cron: `2,32 * * * *`** (i.e. 2 minutes past each half-hour). Gives the CI API time to publish the realised `actual` for the just-completed half-hour before we re-fetch it.
 - **Five extra fixtures captured per source.** Real API JSON committed under `tests/fixtures/carbon_intensity/` so contract drift surfaces as a CI failure on the next ingest. Loud > silent.
 
+## 2026-06 — Phase 2 prod cutover lessons
+
+- **`/opt/gridpulse/.env` is a symlink to `/etc/gridpulse/.env`** on the box. Compose's `${VAR}` interpolation reads from `.env` in the project directory; `env_file:` populates container environments at start. They are *separate mechanisms*. The symlink lets the same file feed both — without it, `POSTGRES_PASSWORD` would fall back to the literal `"changeme"` default in Compose interpolation, breaking the app even though the container's runtime env was correct.
+- **`docker-compose.yml`'s `environment:` block does NOT include secrets** (SENTRY_DSN, HEALTHCHECKS_PING_KEY, R2_*, ICEBERG_CATALOG_URI). Compose's merge rule is `environment` > `env_file` — listing a secret here with a default like `${SENTRY_DSN:-}` silently wipes the prod `env_file` value. Only values needed at compose-parse time (POSTGRES_PASSWORD for the DATABASE_URL interpolation, GIT_SHA, ENVIRONMENT) remain in `environment:`.
+- **Postgres prod password = `password` (explicitly weak).** User chose this against Claude's recommendation; documented here per CLAUDE.md "flag deviations explicitly". Rotate before going public on Show HN or in any interview demo. Postgres is bound to 127.0.0.1 so not internet-reachable, but a weak password is one SSH compromise away from a real problem and a bad signal in screenshots.
+- **Migrations don't run on deploy.** Phase 1D's deploy.yml ships images but doesn't apply migrations — by design, per docs/infra-design.md ("one manual gate"). Currently run by `docker exec gridpulse-app python -m gridpulse.storage.migrate` post-deploy. Future: add a Make target `make migrate-prod IP=...` and document in runbooks.
+- **`HEALTHCHECKS_PING_KEY` not `HEALTHCHECKS_BASE_URL`.** `.env.example` was updated in Phase 2B but the existing prod `/etc/gridpulse/.env` still had the old name; ops carried it across by hand. Future template renames need a migration step or runbook entry.
+
 ## Format for future entries
 
 ```

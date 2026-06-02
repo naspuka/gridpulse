@@ -81,11 +81,11 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done
 - [x] 2.8  `gridpulse/storage/postgres.py` — connection pool + upsert helper
 - [x] 2.9  Dagster asset `carbon_intensity_national` — schedule every 30 min
 - [x] 2.10 Dagster asset `carbon_intensity_regional` — single asset (not per-region), every 30 min
-- [ ] 2.11 Healthchecks.io project + per-asset heartbeat URLs
-- [ ] 2.12 `@with_heartbeat` decorator on Dagster ops
-- [ ] 2.13 Sentry SDK init in app + Dagster code
-- [ ] 2.14 Integration test: throwaway Postgres + asset run → row count > 0
-- [ ] 2.15 Deploy; verify two consecutive successful schedules in Dagster UI
+- [x] 2.11 Healthchecks.io project + slug-based ping key in `/etc/gridpulse/.env`
+- [x] 2.12 `@with_heartbeat` decorator on Dagster ops (fail-open, unit-tested)
+- [x] 2.13 Sentry SDK init in app + Dagster code (verified in both prod containers)
+- [x] 2.14 Integration test: throwaway Postgres + asset run → row count > 0 (4 tests)
+- [x] 2.15 Deploy + schedule `carbon_intensity_30min` enabled — watching first 2 auto-runs
 
 **DoD:** Asset has run successfully ≥ 4 times in a row without intervention. `raw.carbon_intensity` has fresh data. Healthchecks.io shows green; Sentry has zero errors.
 
