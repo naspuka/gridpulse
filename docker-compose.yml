@@ -4,16 +4,13 @@
 
 name: gridpulse
 
+# Only the values useful at compose-parse time live here. SECRETS (SENTRY_DSN,
+# HEALTHCHECKS_PING_KEY, R2_*, ICEBERG_CATALOG_URI, etc.) are NOT listed —
+# Compose's `environment:` overrides `env_file:`, which would silently wipe
+# the prod overlay's /etc/gridpulse/.env values. Prod loads those via env_file.
 x-dagster-env: &dagster_env
   DATABASE_URL: postgresql://${POSTGRES_USER:-gridpulse}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/${POSTGRES_DB:-gridpulse}
   DAGSTER_HOME: /opt/dagster_home
-  SENTRY_DSN: ${SENTRY_DSN:-}
-  HEALTHCHECKS_BASE_URL: ${HEALTHCHECKS_BASE_URL:-}
-  R2_ENDPOINT: ${R2_ENDPOINT:-}
-  R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID:-}
-  R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY:-}
-  R2_BUCKET: ${R2_BUCKET:-gridpulse-lake}
-  ICEBERG_CATALOG_URI: ${ICEBERG_CATALOG_URI:-}
   GIT_SHA: ${GIT_SHA:-dev}
   ENVIRONMENT: ${ENVIRONMENT:-local}
 
@@ -45,9 +42,9 @@ services:
     container_name: gridpulse-app
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-gridpulse}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/${POSTGRES_DB:-gridpulse}
-      SENTRY_DSN: ${SENTRY_DSN:-}
       GIT_SHA: ${GIT_SHA:-dev}
       ENVIRONMENT: ${ENVIRONMENT:-local}
+      # SENTRY_DSN intentionally absent — comes from env_file in prod.
     depends_on:
       postgres:
         condition: service_healthy
