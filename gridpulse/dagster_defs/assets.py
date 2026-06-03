@@ -21,7 +21,7 @@ Design notes:
   and string-form (deferred) annotations break it.
 """
 
-from typing import Any
+from typing import Any, cast
 
 from dagster import AssetExecutionContext, MaterializeResult, MetadataValue, asset
 
@@ -64,19 +64,24 @@ def _materialize_result(
         "latest_period_utc": MetadataValue.text(latest_period),
     }
     # Per-row-type extras — opportunistic; keep light so the UI stays readable.
+    # The `isinstance(first, ...)` narrows only `first`; mypy can't infer the
+    # rest of the list is homogenous, so we cast each branch's list once.
     first = rows[0]
     if isinstance(first, CarbonIntensityRow):
-        forecasts = [r.forecast_gco2_per_kwh for r in rows]  # type: ignore[attr-defined]
+        ci_rows = cast("list[CarbonIntensityRow]", rows)
+        forecasts = [r.forecast_gco2_per_kwh for r in ci_rows]
         metadata["forecast_min_gco2_per_kwh"] = MetadataValue.int(min(forecasts))
         metadata["forecast_max_gco2_per_kwh"] = MetadataValue.int(max(forecasts))
-        metadata["regions"] = MetadataValue.int(len({r.region_id for r in rows}))  # type: ignore[attr-defined]
+        metadata["regions"] = MetadataValue.int(len({r.region_id for r in ci_rows}))
     elif isinstance(first, AgilePriceRow):
-        prices = [r.price_pence_per_kwh_inc_vat for r in rows]  # type: ignore[attr-defined]
+        ap_rows = cast("list[AgilePriceRow]", rows)
+        prices = [r.price_pence_per_kwh_inc_vat for r in ap_rows]
         metadata["price_min_pence"] = MetadataValue.float(min(prices))
         metadata["price_max_pence"] = MetadataValue.float(max(prices))
-        metadata["regions"] = MetadataValue.int(len({r.region_id for r in rows}))  # type: ignore[attr-defined]
+        metadata["regions"] = MetadataValue.int(len({r.region_id for r in ap_rows}))
     elif isinstance(first, NesoGenerationMixRow):
-        totals = [r.total_generation_mw for r in rows]  # type: ignore[attr-defined]
+        gm_rows = cast("list[NesoGenerationMixRow]", rows)
+        totals = [r.total_generation_mw for r in gm_rows]
         metadata["total_generation_min_mw"] = MetadataValue.float(min(totals))
         metadata["total_generation_max_mw"] = MetadataValue.float(max(totals))
     return MaterializeResult(metadata=metadata)
