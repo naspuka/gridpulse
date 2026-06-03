@@ -34,7 +34,8 @@ sources:
             tests:
               - not_null
               - accepted_values:
-                  values: ["very low", "low", "moderate", "high", "very high"]
+                  arguments:
+                    values: ["very low", "low", "moderate", "high", "very high"]
 
       - name: generation_mix
         description: |

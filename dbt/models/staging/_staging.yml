@@ -17,7 +17,8 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ["very low", "low", "moderate", "high", "very high"]
+              arguments:
+                values: ["very low", "low", "moderate", "high", "very high"]
 
   - name: stg_generation_mix
     description: Wide → long pivot. 11 fuel rows per half-hour.
@@ -28,9 +29,10 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values:
-                ["gas", "coal", "nuclear", "wind", "wind_emb", "hydro",
-                 "imports", "biomass", "other", "solar", "storage"]
+              arguments:
+                values:
+                  ["gas", "coal", "nuclear", "wind", "wind_emb", "hydro",
+                   "imports", "biomass", "other", "solar", "storage"]
 
   - name: stg_agile_price
     description: Pass-through over raw.agile_price.
