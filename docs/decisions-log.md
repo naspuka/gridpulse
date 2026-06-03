@@ -68,6 +68,20 @@ This file mirrors the "Decisions log" section in [CLAUDE.md](../CLAUDE.md). When
 - **Migrations don't run on deploy.** Phase 1D's deploy.yml ships images but doesn't apply migrations — by design, per docs/infra-design.md ("one manual gate"). Currently run by `docker exec gridpulse-app python -m gridpulse.storage.migrate` post-deploy. Future: add a Make target `make migrate-prod IP=...` and document in runbooks.
 - **`HEALTHCHECKS_PING_KEY` not `HEALTHCHECKS_BASE_URL`.** `.env.example` was updated in Phase 2B but the existing prod `/etc/gridpulse/.env` still had the old name; ops carried it across by hand. Future template renames need a migration step or runbook entry.
 
+## 2026-06 — Phase 3 (NESO + Octopus + dbt)
+
+- **NESO DATETIME is UTC, not UK-local.** The dataset's own metadata says so, and the BeforeValidator pins it. DST is therefore a display-layer concern only — every UTC day has exactly 48 half-hours. The CLAUDE.md "46/50 settlement periods" risk vanishes in UTC. Test invariant locked in `tests/unit/test_dst_invariants.py`.
+- **NESO generation_mix schedule: every 30 min, not every 5 min.** NESO refreshes hourly-ish; 5-min polling would waste 11/12 requests. CLAUDE.md said "every 5 mins" — superseded.
+- **Regional Agile asset: single materialisation, not partitioned per region.** One Octopus call fetches all 14 regions (via 14 sequential tariff URLs); partitioning would 14× the cron-driven API hits for the same payload. Sequential within one asset run keeps the load polite.
+- **April 2026 Octopus levy claim NOT visible in the data.** Verified by querying AGILE-24-10-01 prices straddling 2026-04-01 — normal day-to-day variation, no 3.5p/kWh step. CLAUDE.md flagged this for re-verification; verified false. No `is_post_2026_levy_reform` column in marts.
+- **Octopus current product is `AGILE-24-10-01`.** `AGILE-FLEX-22-11-25` (CLAUDE.md's reference) was retired in late 2024 and now serves historical only. Tariff URL pattern: `E-1R-AGILE-24-10-01-{LETTER}`.
+- **Carbon Intensity API has 18 regions, not 14.** 14 DNOs + 4 rollups (England/Scotland/Wales/GB). `to_rows()` on regional response drops the rollups; we use `/intensity` (which carries `actual`) for the national value instead.
+- **dbt `generate_schema_name` overridden.** Default dbt prepends `target.schema` to `+schema:`, so `+schema: staging` becomes `marts_staging`. Standard macro override at `dbt/macros/generate_schema_name.sql` makes `+schema:` the literal schema name so we land in `staging.*` and `marts.*` exactly where the migrations expect.
+- **dbt 1.11: generic-test arguments must be under `arguments:`.** Top-level keys (e.g. `accepted_values.values:`) emit a deprecation warning but still work; nested under `arguments:` is the future-proof form. Migrated all `_sources.yml`, `_staging.yml`, `_marts.yml`.
+- **Dropped `dbt_utils.equal_rowcount` sanity test.** The macro returns `None` (not `0`) for the failures count when both tables are empty, which trips dbt's JSON schema validation BEFORE `severity: warn` can fire. Re-add as a singular test guarded on row counts in V2 if we want the 11-fuel pivot sanity check back.
+- **Sentry caught a real prod failure.** `DagsterInvalidDefinitionError: Op/Graph definition names must be unique within a repository` (asset and job both named `dbt_build`). Renamed job to `transform`. First real-world fire of the Phase 2 observability stack — worked as designed.
+- **Single Dagster asset for dbt, not `dagster-dbt` per-model graph.** 5 models doesn't justify the UI noise. The dbt asset shells out to `dbt deps && dbt build` and dbt drives the model DAG. Re-evaluate at >20 models.
+
 ## Format for future entries
 
 ```

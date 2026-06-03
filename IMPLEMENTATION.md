@@ -96,21 +96,21 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done
 **Goal:** All three V1 sources flowing in; dbt produces clean tested marts.
 
 ### 3A. NESO + Octopus ingestion
-- [ ] 3.1  `gridpulse/contracts/neso.py` (with UK-local → UTC conversion in `to_rows()`)
-- [ ] 3.2  `gridpulse/contracts/octopus.py`
-- [ ] 3.3  Ingestion modules + tests + fixtures for both sources
-- [ ] 3.4  Migrations `005_raw_generation_mix.sql`, `006_raw_agile_price.sql`
-- [ ] 3.5  Dagster assets: `generation_mix` (every 5 min), `agile_price` (daily 16:30 UK, 14 regions)
-- [ ] 3.6  DST/synthetic-period test: parse a 50-period day correctly
+- [x] 3.1  `gridpulse/contracts/neso.py` (NESO DATETIME is UTC, not UK-local — corrected at integration)
+- [x] 3.2  `gridpulse/contracts/octopus.py`
+- [x] 3.3  Ingestion modules + tests + fixtures for both sources
+- [x] 3.4  Migrations `005_raw_generation_mix.sql`, `006_raw_agile_price.sql`
+- [x] 3.5  Dagster assets: `generation_mix` (every 30 min), `agile_price` (daily 16:30 UTC, all 14 DNOs)
+- [x] 3.6  DST/synthetic-period test: 48 rows/day in UTC (DST is a display-layer concern only)
 
 ### 3B. dbt-core
-- [ ] 3.7  `dbt/dbt_project.yml`, `profiles.yml.example`, `packages.yml` (dbt_utils)
-- [ ] 3.8  Sources YAML pointing at `raw.*`
-- [ ] 3.9  Staging models: `stg_carbon_intensity`, `stg_generation_mix` (wide→long), `stg_agile_price`
-- [ ] 3.10 Mart models: `mart_half_hourly`, `mart_generation_mix_long`, `mart_best_slots_24h`
-- [ ] 3.11 `schema.yml` — not-null, unique, accepted-values tests on every mart
-- [ ] 3.12 Wire `dbt build` as a Dagster asset downstream of all ingestion assets
-- [ ] 3.13 CI runs `dbt build` against ephemeral Postgres
+- [x] 3.7  `dbt/dbt_project.yml`, `profiles.yml.example`, `packages.yml` (dbt_utils)
+- [x] 3.8  Sources YAML pointing at `raw.*` + `ref.*`
+- [x] 3.9  Staging models: `stg_carbon_intensity`, `stg_generation_mix` (wide→long), `stg_agile_price`
+- [x] 3.10 Mart models: `mart_half_hourly`, `mart_generation_mix_long`, `mart_best_slots_24h`
+- [x] 3.11 `schema.yml` — not-null, accepted_values, dbt_utils.unique_combination_of_columns on every mart
+- [x] 3.12 `dbt_build` Dagster asset wired downstream of all 4 ingestion assets; schedule `transform_daily` at 04:00 UTC
+- [x] 3.13 CI runs `dbt deps && dbt build` against ephemeral Postgres
 
 **DoD:** All three sources fresh in `raw.*`. `dbt build` passes locally and in CI. `marts.mart_best_slots_24h` returns sensible rows for at least 3 regions.
 
