@@ -6,7 +6,7 @@ it's metadata about *us*, not about the data, and Iceberg's snapshot system
 already records when each file was written.
 
 Iceberg type notes:
-- TimestampType(with_timezone=True) maps to Postgres TIMESTAMPTZ.
+- TimestamptzType(with_timezone=True) maps to Postgres TIMESTAMPTZ.
 - IntegerType is 32-bit signed; LongType is 64-bit. We use Integer for the
   small-ish gCO2/kWh and region ids; Long would be wasteful.
 - FloatType is 32-bit (matches Postgres REAL); use DoubleType only when you
@@ -29,8 +29,11 @@ from pyiceberg.types import (
     IntegerType,
     NestedField,
     StringType,
-    TimestampType,
+    TimestamptzType,
 )
+# Note: TimestampType is "no timezone"; TimestamptzType is "with UTC timezone".
+# All our `period_start_utc` values are tz-aware (psycopg returns Postgres
+# TIMESTAMPTZ as tz-aware datetime), so TimestamptzType matches at runtime.
 
 # ---------------------------------------------------------------------------
 # carbon_intensity
@@ -38,8 +41,8 @@ from pyiceberg.types import (
 
 CARBON_INTENSITY_SCHEMA = Schema(
     NestedField(1, "region_id", IntegerType(), required=True),
-    NestedField(2, "period_start_utc", TimestampType(), required=True),
-    NestedField(3, "period_end_utc", TimestampType(), required=True),
+    NestedField(2, "period_start_utc", TimestamptzType(), required=True),
+    NestedField(3, "period_end_utc", TimestamptzType(), required=True),
     NestedField(4, "forecast_gco2_per_kwh", IntegerType(), required=True),
     # NULL for forecast-only periods (and always NULL for regional rows).
     NestedField(5, "actual_gco2_per_kwh", IntegerType(), required=False),
@@ -61,7 +64,7 @@ CARBON_INTENSITY_PARTITION_SPEC = PartitionSpec(
 # ---------------------------------------------------------------------------
 
 GENERATION_MIX_SCHEMA = Schema(
-    NestedField(1, "period_start_utc", TimestampType(), required=True),
+    NestedField(1, "period_start_utc", TimestamptzType(), required=True),
     NestedField(2, "gas_mw", FloatType(), required=True),
     NestedField(3, "coal_mw", FloatType(), required=True),
     NestedField(4, "nuclear_mw", FloatType(), required=True),
@@ -93,8 +96,8 @@ GENERATION_MIX_PARTITION_SPEC = PartitionSpec(
 
 AGILE_PRICE_SCHEMA = Schema(
     NestedField(1, "region_id", IntegerType(), required=True),
-    NestedField(2, "period_start_utc", TimestampType(), required=True),
-    NestedField(3, "period_end_utc", TimestampType(), required=True),
+    NestedField(2, "period_start_utc", TimestamptzType(), required=True),
+    NestedField(3, "period_end_utc", TimestamptzType(), required=True),
     NestedField(4, "price_pence_per_kwh_inc_vat", FloatType(), required=True),
     NestedField(5, "price_pence_per_kwh_exc_vat", FloatType(), required=True),
 )

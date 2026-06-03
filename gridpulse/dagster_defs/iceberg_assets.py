@@ -18,6 +18,7 @@ from datetime import UTC, datetime, timedelta
 import pyarrow as pa
 from dagster import AssetExecutionContext, MaterializeResult, MetadataValue, asset
 from pyiceberg.expressions import And, GreaterThanOrEqual, LessThan
+from pyiceberg.io.pyarrow import schema_to_pyarrow
 from pyiceberg.table import Table
 
 from gridpulse.lib.heartbeat import with_heartbeat
@@ -72,8 +73,14 @@ def _overwrite_day(table: Table, day_start: datetime, rows: list[dict]) -> int:
     )
 
     if rows:
-        # PyArrow table — PyIceberg uses Arrow as its in-memory format.
-        arrow_tbl = pa.Table.from_pylist(rows)
+        # Build the Arrow schema FROM the Iceberg schema so types and nullability
+        # line up exactly. Without an explicit schema, from_pylist() infers int64
+        # for Python ints (Iceberg expects int32 for IntegerType), nullable for
+        # every column (Iceberg expects required=True for NOT NULL), and naive
+        # timestamps for tz-less datetimes. PyIceberg's overwrite() refuses
+        # ALL of those mismatches.
+        arrow_schema = schema_to_pyarrow(table.schema())
+        arrow_tbl = pa.Table.from_pylist(rows, schema=arrow_schema)
         table.overwrite(df=arrow_tbl, overwrite_filter=overwrite_filter)
     else:
         # Drop the partition without writing anything new.

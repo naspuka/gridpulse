@@ -29,6 +29,7 @@ import sys
 from datetime import UTC, date, datetime, timedelta
 
 import pyarrow as pa
+from pyiceberg.io.pyarrow import schema_to_pyarrow
 
 from gridpulse.contracts.carbon_intensity import CarbonIntensityNationalResponse
 from gridpulse.ingestion.carbon_intensity import BASE_URL
@@ -69,6 +70,10 @@ def _fetch_range(start: datetime, end: datetime) -> list[dict]:
 
 def backfill(start_date: date, end_date: date) -> int:
     table = get_catalog().load_table(f"{NAMESPACE}.carbon_intensity")
+    # Same trick as the archive asset — build Arrow schema from the Iceberg
+    # schema so types/nullability line up exactly. Built once outside the loop.
+    arrow_schema = schema_to_pyarrow(table.schema())
+
     total = 0
     cursor = datetime.combine(start_date, datetime.min.time(), tzinfo=UTC)
     end = datetime.combine(end_date, datetime.min.time(), tzinfo=UTC)
@@ -77,7 +82,7 @@ def backfill(start_date: date, end_date: date) -> int:
         chunk_end = min(cursor + timedelta(days=CHUNK_DAYS), end)
         rows = _fetch_range(cursor, chunk_end)
         if rows:
-            arrow_tbl = pa.Table.from_pylist(rows)
+            arrow_tbl = pa.Table.from_pylist(rows, schema=arrow_schema)
             table.append(arrow_tbl)
             total += len(rows)
         log.info(
