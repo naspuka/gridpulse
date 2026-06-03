@@ -50,6 +50,10 @@ def _wire_duckdb_for_r2(con: duckdb.DuckDBPyConnection) -> None:
     """INSTALL iceberg, register an S3 SECRET that points at R2."""
     con.execute("INSTALL iceberg; LOAD iceberg;")
     con.execute("INSTALL httpfs; LOAD httpfs;")
+    # Our catalog is the SQL catalog (Postgres), not a file-based one. DuckDB
+    # can't see our metadata pointer, so it has to glob R2 to find the
+    # current snapshot. Safe for our one-writer / scheduled cadence.
+    con.execute("SET unsafe_enable_version_guessing = true;")
     endpoint = os.environ["R2_ENDPOINT"]
     # DuckDB wants endpoint as host only (no scheme); strip if present.
     if endpoint.startswith("https://"):
