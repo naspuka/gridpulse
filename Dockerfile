@@ -69,6 +69,10 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 COPY dbt ./dbt
 RUN cp /app/dbt/profiles.yml.example /app/dbt/profiles.yml
 
+# scripts/ — one-off CLIs (init_iceberg_tables, backfill_carbon_intensity,
+# query_lake). Run via `docker exec ... python -m scripts.<name>`.
+COPY scripts ./scripts
+
 ENV DAGSTER_HOME=/opt/dagster_home \
     DBT_PROJECT_DIR=/app/dbt \
     DBT_PROFILES_DIR=/app/dbt

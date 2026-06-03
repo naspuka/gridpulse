@@ -72,9 +72,9 @@ def get_catalog() -> Catalog:
             "s3.secret-access-key": r2_secret,
             # R2 ignores region but boto3/pyiceberg require *something*.
             "s3.region": "auto",
-            # PyIceberg pins the SQLAlchemy URL prefix; ours uses `postgresql://`
-            # which is the canonical form.
-            "init_catalog_tables": True,
+            # Must be the literal STRING "true" — PyIceberg's strtobool calls
+            # .lower() on the value, so passing a Python bool throws AttributeError.
+            "init_catalog_tables": "true",
         },
     )
     log.info("Iceberg catalog initialised (warehouse=%s)", _r2_warehouse_uri())
