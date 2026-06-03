@@ -11,6 +11,7 @@ from .assets import (
     generation_mix,
 )
 from .dbt_assets import dbt_build
+from .iceberg_assets import archive_to_iceberg, expire_snapshots
 
 # Init Sentry on Dagster module import. The webserver, daemon, and each
 # spawned step subprocess all import this module, so each gets its own
@@ -82,6 +83,36 @@ dbt_build_daily_schedule = ScheduleDefinition(
 )
 
 
+# Iceberg archival — nightly at 02:00 UTC. Picks up the previous day(s) of
+# raw.* rows and partition-overwrites them into Iceberg on R2. Runs before
+# dbt at 04:00 so the lakehouse always reflects yesterday's final hot data.
+_archive_to_iceberg_job = define_asset_job(
+    name="archive",
+    selection=AssetSelection.assets(archive_to_iceberg),
+)
+archive_to_iceberg_daily_schedule = ScheduleDefinition(
+    name="archive_daily",
+    job=_archive_to_iceberg_job,
+    cron_schedule="0 2 * * *",
+    execution_timezone="UTC",
+    description="Nightly Postgres → Iceberg archive at 02:00 UTC (2-day rolling window).",
+)
+
+# Snapshot retention — weekly at 03:00 UTC Sunday. Drops Iceberg snapshots
+# older than 30 days, freeing the dereferenced Parquet files on R2.
+_expire_snapshots_job = define_asset_job(
+    name="snapshot_gc",
+    selection=AssetSelection.assets(expire_snapshots),
+)
+expire_snapshots_weekly_schedule = ScheduleDefinition(
+    name="snapshot_gc_weekly",
+    job=_expire_snapshots_job,
+    cron_schedule="0 3 * * 0",
+    execution_timezone="UTC",
+    description="Weekly Iceberg snapshot expiry (>30 days), Sunday 03:00 UTC.",
+)
+
+
 defs = Definitions(
     assets=[
         carbon_intensity_national,
@@ -89,17 +120,23 @@ defs = Definitions(
         generation_mix,
         agile_price,
         dbt_build,
+        archive_to_iceberg,
+        expire_snapshots,
     ],
     jobs=[
         _carbon_intensity_job,
         _generation_mix_job,
         _agile_price_job,
         _dbt_build_job,
+        _archive_to_iceberg_job,
+        _expire_snapshots_job,
     ],
     schedules=[
         carbon_intensity_30min_schedule,
         generation_mix_30min_schedule,
         agile_price_daily_schedule,
         dbt_build_daily_schedule,
+        archive_to_iceberg_daily_schedule,
+        expire_snapshots_weekly_schedule,
     ],
 )
