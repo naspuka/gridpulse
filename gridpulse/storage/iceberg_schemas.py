@@ -29,11 +29,11 @@ from pyiceberg.types import (
     IntegerType,
     NestedField,
     StringType,
+    # TimestampType is "no timezone"; TimestamptzType is "with UTC timezone".
+    # All our `period_start_utc` values are tz-aware (psycopg returns Postgres
+    # TIMESTAMPTZ as tz-aware datetime), so TimestamptzType matches at runtime.
     TimestamptzType,
 )
-# Note: TimestampType is "no timezone"; TimestamptzType is "with UTC timezone".
-# All our `period_start_utc` values are tz-aware (psycopg returns Postgres
-# TIMESTAMPTZ as tz-aware datetime), so TimestamptzType matches at runtime.
 
 # ---------------------------------------------------------------------------
 # carbon_intensity
