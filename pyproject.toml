@@ -105,10 +105,16 @@ follow_imports = "skip"        # don't walk into them — strict-mypy is otherwi
 
 [[tool.mypy.overrides]]
 # Dagster glue code: trust Dagster's runtime, skip strict-typing the integration shims.
+# Dagster types are Any (via follow_imports="skip" above) so generic forms
+# like `MaterializeResult`, `AssetSelection`, `define_asset_job(...)` etc.
+# can't carry useful param info anyway.
 module = "gridpulse.dagster_defs.*"
 disallow_untyped_defs = false
 disallow_incomplete_defs = false
 disallow_untyped_decorators = false
+disallow_any_generics = false
+disallow_any_unimported = false
+disallow_subclassing_any = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

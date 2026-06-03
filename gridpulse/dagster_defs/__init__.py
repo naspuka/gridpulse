@@ -66,12 +66,15 @@ agile_price_daily_schedule = ScheduleDefinition(
 # is enough (no marts in V1 are real-time-critical — FastAPI reads tables that
 # dbt refreshes). Phase 5 may tighten this when we have user-facing latency
 # requirements.
+# Job name MUST differ from the asset name — Dagster synthesises an internal
+# op/graph from the job and the asset, and they share a namespace. Using
+# the same string here triggered DagsterInvalidDefinitionError on prod.
 _dbt_build_job = define_asset_job(
-    name="dbt_build",
+    name="transform",
     selection=AssetSelection.assets(dbt_build),
 )
 dbt_build_daily_schedule = ScheduleDefinition(
-    name="dbt_build_daily",
+    name="transform_daily",
     job=_dbt_build_job,
     cron_schedule="0 4 * * *",
     execution_timezone="UTC",
