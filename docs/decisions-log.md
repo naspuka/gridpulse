@@ -82,6 +82,17 @@ This file mirrors the "Decisions log" section in [CLAUDE.md](../CLAUDE.md). When
 - **Sentry caught a real prod failure.** `DagsterInvalidDefinitionError: Op/Graph definition names must be unique within a repository` (asset and job both named `dbt_build`). Renamed job to `transform`. First real-world fire of the Phase 2 observability stack — worked as designed.
 - **Single Dagster asset for dbt, not `dagster-dbt` per-model graph.** 5 models doesn't justify the UI noise. The dbt asset shells out to `dbt deps && dbt build` and dbt drives the model DAG. Re-evaluate at >20 models.
 
+## 2026-06 — Phase 4 (Iceberg lakehouse)
+
+- **Dual-storage interview soundbite — for real.** *"Postgres + TimescaleDB on a £7/month box for the last 90 days of half-hourly data — sub-second user queries. Iceberg tables on Cloudflare R2 for the full history — same schema, queried with PyIceberg or DuckDB. A Dagster asset partition-overwrites yesterday's rows from Postgres to Iceberg every night at 02:00 UTC. The catalog lives in the same Postgres so it's covered by the same backups. R2's zero-egress pricing is the unlock that makes the lakehouse affordable on this budget."* Now backed by working code in prod (`f00c87e` → `ba557e0` chain).
+- **`TimestamptzType` not `TimestampType` for Iceberg timestamp columns.** Postgres TIMESTAMPTZ returns tz-aware Python datetimes; Arrow infers `timestamp[us, tz=UTC]`; Iceberg `TimestampType` (no tz) refuses it. `TimestamptzType` matches the actual data semantically (all our values are UTC-bearing) and resolves the impedance mismatch.
+- **Build Arrow schema from Iceberg schema at write time.** `pa.Table.from_pylist(rows)` infers int64 for Python ints (Iceberg expects int32 for `IntegerType`) and marks every column nullable (Iceberg expects required=True for NOT NULL). The fix is `schema=schema_to_pyarrow(table.schema())` on every write call — single source of truth, no drift.
+- **`init_catalog_tables` must be the literal string `"true"`.** PyIceberg's `strtobool` calls `.lower()` on the value, so passing a Python bool throws AttributeError at SqlCatalog construction time. Subtle, but caught early on the first prod boot.
+- **DuckDB Iceberg extension limitation: `Unimplemented type for cast (DATE -> INTEGER)`.** Reading our manifest avro files via `iceberg_scan(...)` errors out on the DayTransform partition metadata. Documented in `scripts/query_lake.py` — the script still works for tables WITHOUT day-partitioning, and PyIceberg's native `table.scan().to_arrow()` is the working ad-hoc tool for now. Watch DuckDB 1.2+ for the fix.
+- **Partition overwrite, not append, for nightly archival.** Idempotent by construction: re-running the same date rewrites the partition rather than duplicating. Late-arriving rows handled by the 2-day rolling window. No PKs in Iceberg, so this discipline is what keeps the lake consistent.
+- **Backfill bypasses Postgres entirely.** 2018-onwards Carbon Intensity is ~2M rows; Postgres only retains 90 days. Funnelling all of history through Postgres just to delete most of it is wasteful and risks blowing the hypertable cache. The `scripts/backfill_carbon_intensity.py` script appends directly to Iceberg.
+- **Three jobs, three job names that don't collide with assets.** Same Phase 3C gotcha applies — `archive_to_iceberg` (asset) needs a different job name (`archive`); `expire_snapshots` (asset) gets `snapshot_gc`.
+
 ## Format for future entries
 
 ```

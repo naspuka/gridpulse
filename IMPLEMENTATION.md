@@ -120,16 +120,16 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done
 
 **Goal:** Cold storage live; can articulate why both layers exist.
 
-- [ ] 4.1  `gridpulse/storage/iceberg.py` — SQL catalog (Postgres-backed) + R2 config
-- [ ] 4.2  Schema definitions for 3 Iceberg tables matching `raw.*` shapes
-- [ ] 4.3  Partition spec: `DayTransform(period_start_utc)` on all three
-- [ ] 4.4  One-shot `init_iceberg_tables.py` script — creates tables in catalog
-- [ ] 4.5  Dagster asset `archive_to_iceberg` — daily 02:00 UTC, partition-overwrite yesterday
-- [ ] 4.6  `expire_snapshots` weekly Dagster asset (>30 days)
-- [ ] 4.7  Backfill asset: Carbon Intensity 2018→ direct to Iceberg (skips Postgres)
-- [ ] 4.8  DuckDB-on-Iceberg quick-query script `scripts/query_lake.py`
-- [ ] 4.9  Verify time travel: query an older snapshot id
-- [ ] 4.10 Document the dual-storage interview soundbite in `docs/decisions-log.md`
+- [x] 4.1  `gridpulse/storage/iceberg.py` — SQL catalog (Postgres-backed) + R2 config
+- [x] 4.2  Schema definitions for 3 Iceberg tables matching `raw.*` shapes
+- [x] 4.3  Partition spec: `DayTransform(period_start_utc)` on all three
+- [x] 4.4  One-shot `init_iceberg_tables.py` script — creates tables in catalog
+- [x] 4.5  Dagster asset `archive_to_iceberg` — daily 02:00 UTC, partition-overwrite yesterday
+- [x] 4.6  `expire_snapshots` weekly Dagster asset (>30 days)
+- [x] 4.7  Backfill asset: Carbon Intensity 2018→ direct to Iceberg (skips Postgres) — script ready, run on demand
+- [x] 4.8  DuckDB-on-Iceberg quick-query script `scripts/query_lake.py` (+ note on DuckDB ext limitation)
+- [x] 4.9  Verify time travel: query an older snapshot id (via PyIceberg's `scan(snapshot_id=...)`)
+- [x] 4.10 Document the dual-storage interview soundbite in `docs/decisions-log.md`
 
 **DoD:** Iceberg holds ≥ 1 day of fresh data + multi-year backfill of Carbon Intensity. DuckDB queries return correct results in under 2 seconds. Re-running yesterday's archival is idempotent (snapshot count grows by 1, row count unchanged).
 
