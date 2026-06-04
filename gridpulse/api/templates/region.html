@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}{{ region.name }}{% endblock %}
+
+{% block content %}
+<div class="prose max-w-none mb-4">
+    <h1 class="text-3xl font-bold mb-1">{{ region.name }}</h1>
+    <p class="text-base-content/70">
+        Live regional carbon intensity, generation mix (national), and Agile prices.
+        Auto-refreshes every 60 seconds.
+    </p>
+</div>
+
+<div class="mb-6 flex items-center gap-2">
+    <label class="label-text font-medium">Region:</label>
+    <select
+        class="select select-bordered select-sm"
+        hx-get=""
+        hx-target="body"
+        hx-trigger="change"
+        hx-push-url="true"
+        onchange="this.setAttribute('hx-get', '/region/' + this.value);">
+        {% for r in regions %}
+            <option value="{{ r.slug }}" {% if r.region_id == region.region_id %}selected{% endif %}>
+                {{ r.name }}
+            </option>
+        {% endfor %}
+    </select>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+    <div class="card bg-base-100 shadow-sm"
+         hx-get="/partials/current-conditions/{{ region.slug }}"
+         hx-trigger="load, every 60s"
+         hx-swap="innerHTML">
+        <div class="card-body p-4">
+            <div class="skeleton h-32 w-full"></div>
+        </div>
+    </div>
+
+    <div class="card bg-base-100 shadow-sm"
+         hx-get="/partials/generation-donut"
+         hx-trigger="load, every 60s"
+         hx-swap="innerHTML">
+        <div class="card-body p-4">
+            <div class="skeleton h-32 w-full"></div>
+        </div>
+    </div>
+
+    {% if agile_region and agile_region.region_id != 0 %}
+    <div class="card bg-base-100 shadow-sm lg:col-span-2"
+         hx-get="/partials/best-slots/{{ agile_region.slug }}"
+         hx-trigger="load, every 60s"
+         hx-swap="innerHTML">
+        <div class="card-body p-4">
+            <div class="skeleton h-40 w-full"></div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="card bg-base-100 shadow-sm lg:col-span-2"
+         hx-get="/partials/carbon-trend/{{ region.slug }}"
+         hx-trigger="load, every 60s"
+         hx-swap="innerHTML">
+        <div class="card-body p-4">
+            <div class="skeleton h-48 w-full"></div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

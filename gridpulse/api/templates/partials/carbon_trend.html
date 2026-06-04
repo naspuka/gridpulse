@@ -1,0 +1,67 @@
+{# 24h carbon-intensity line chart. #}
+<div class="card-body p-4">
+    <div class="flex items-baseline justify-between">
+        <h2 class="card-title">Carbon intensity — last 24 h ({{ region.name }})</h2>
+        <span class="text-xs text-base-content/60">gCO₂/kWh</span>
+    </div>
+
+    {% if points %}
+        {% set uid = (points[0].period_start_utc.timestamp() if points else 0)|int %}
+        <div style="height: 240px;">
+            <canvas id="trend-{{ uid }}"></canvas>
+        </div>
+
+        <script type="application/json" id="trend-data-{{ uid }}">
+        {{ {
+            "labels": (points | map(attribute="period_start_utc") | map("string") | list),
+            "forecast": (points | map(attribute="forecast_gco2_per_kwh") | list),
+            "actual": (points | map(attribute="actual_gco2_per_kwh") | list)
+        } | tojson }}
+        </script>
+
+        <script>
+        (function () {
+            const id = "{{ uid }}";
+            const el = document.getElementById("trend-" + id);
+            const data = JSON.parse(document.getElementById("trend-data-" + id).textContent);
+            if (!el || typeof Chart === "undefined") { return; }
+            const labels = data.labels.map(s => s.slice(11, 16));
+            new Chart(el, {
+                type: "line",
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: "actual",
+                            data: data.actual,
+                            borderColor: "#16a34a",
+                            backgroundColor: "rgba(22, 163, 74, 0.15)",
+                            tension: 0.25,
+                            spanGaps: true
+                        },
+                        {
+                            label: "forecast",
+                            data: data.forecast,
+                            borderColor: "#a3a3a3",
+                            borderDash: [3, 3],
+                            tension: 0.25
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: "index", intersect: false },
+                    plugins: { legend: { position: "top" } },
+                    scales: {
+                        y: { title: { display: true, text: "gCO₂/kWh" } },
+                        x: { title: { display: true, text: "UTC" } }
+                    }
+                }
+            });
+        })();
+        </script>
+    {% else %}
+        <p class="text-base-content/60">Not enough carbon data yet — needs a full 24 h of ingest.</p>
+    {% endif %}
+</div>

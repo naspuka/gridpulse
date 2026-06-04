@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}GridPulse{% endblock %} — live UK energy intelligence</title>
+    <meta name="description" content="Live UK electricity generation mix, regional carbon intensity, and Octopus Agile prices.">
+
+    {# Tailwind + DaisyUI via CDN (no build step — CLAUDE.md stack lock). #}
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+
+    {# HTMX for partial swaps + Chart.js via CDN. Both load deferred to keep
+       first paint snappy. #}
+    <script defer src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    {% block head %}{% endblock %}
+</head>
+<body class="bg-base-200 text-base-content min-h-screen flex flex-col">
+
+    <header class="navbar bg-base-100 border-b border-base-300">
+        <div class="flex-1">
+            <a href="/" class="btn btn-ghost text-xl">⚡ GridPulse</a>
+        </div>
+        <div class="flex-none">
+            <ul class="menu menu-horizontal px-1 hidden sm:flex">
+                <li><a href="/" {% if request.url.path == "/" %}class="active"{% endif %}>Now</a></li>
+                <li><a href="/region/london" {% if "/region/" in request.url.path %}class="active"{% endif %}>By region</a></li>
+                <li><a href="/status" {% if request.url.path == "/status" %}class="active"{% endif %}>Status</a></li>
+                <li><a href="/docs">API</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto px-4 py-6 max-w-6xl">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="bg-base-100 border-t border-base-300 text-sm py-6 mt-auto">
+        <div class="container mx-auto px-4 max-w-6xl">
+            <p class="mb-2">
+                <strong>Attribution</strong> —
+                Carbon intensity data from the
+                <a href="https://carbonintensity.org.uk" class="link link-primary" rel="noopener">Carbon Intensity API</a>,
+                licensed
+                <a href="https://creativecommons.org/licenses/by/4.0/" class="link link-primary" rel="noopener">CC BY 4.0</a>.
+                Generation mix from
+                <a href="https://www.neso.energy" class="link link-primary" rel="noopener">NESO</a>.
+                Tariff data from
+                <a href="https://octopus.energy" class="link link-primary" rel="noopener">Octopus Energy</a>.
+            </p>
+            <p class="text-base-content/60">
+                Source code on <a href="https://github.com/naspuka/gridpulse" class="link" rel="noopener">GitHub</a>.
+                Updated {{ now_utc.strftime("%Y-%m-%d %H:%M") }} UTC.
+            </p>
+        </div>
+    </footer>
+
+</body>
+</html>

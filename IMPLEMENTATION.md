@@ -140,30 +140,30 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done
 **Goal:** Visible, usable site.
 
 ### 5A. FastAPI scaffolding
-- [ ] 5.1  `gridpulse/api/main.py` — app factory, middleware (Sentry, rate limit, cache headers)
-- [ ] 5.2  `gridpulse/api/queries.py` — single source of read SQL (used by HTML and JSON)
-- [ ] 5.3  `gridpulse/api/schemas.py` — pydantic response models
-- [ ] 5.4  In-process TTL cache wrapper (30 s for "current" queries)
-- [ ] 5.5  `slowapi` rate limiter, 30/min on `/api/v1/*`
+- [x] 5.1  `gridpulse/api/main.py` — app factory, middleware (Sentry, rate limit, cache headers)
+- [x] 5.2  `gridpulse/api/queries.py` — single source of read SQL (used by HTML and JSON)
+- [x] 5.3  `gridpulse/api/schemas.py` — pydantic response models
+- [x] 5.4  In-process TTL cache wrapper (30 s for "current" queries)
+- [x] 5.5  `slowapi` rate limiter, 30/min on `/api/v1/*`
 
 ### 5B. JSON API
-- [ ] 5.6  `/api/v1/regions`
-- [ ] 5.7  `/api/v1/carbon-intensity/{current,range}`
-- [ ] 5.8  `/api/v1/agile-price/{current,range}`
-- [ ] 5.9  `/api/v1/generation-mix/current`
-- [ ] 5.10 `/api/v1/best-slots`
-- [ ] 5.11 OpenAPI page reachable at `/docs`; sample curls in README
+- [x] 5.6  `/api/v1/regions`
+- [x] 5.7  `/api/v1/carbon-intensity/{current,range}`
+- [x] 5.8  `/api/v1/agile-price/{current,range}`
+- [x] 5.9  `/api/v1/generation-mix/current`
+- [x] 5.10 `/api/v1/best-slots`
+- [x] 5.11 OpenAPI page reachable at `/docs`; sample curls in README
 
 ### 5C. HTML / HTMX
-- [ ] 5.12 `templates/base.html` (header, footer with attribution, Tailwind/HTMX/Chart.js CDN)
-- [ ] 5.13 `templates/landing.html` + partials: current_conditions, best_slots, generation_donut, carbon_trend
-- [ ] 5.14 `templates/region.html` + slug routing + 404 for unknown slugs
-- [ ] 5.15 HTMX polling on each card (`hx-trigger="every 60s"`)
-- [ ] 5.16 Region picker (HTMX swap, `hx-push-url="true"`)
-- [ ] 5.17 `/status` page — last-ingest per source, Postgres reachability
+- [x] 5.12 `templates/base.html` (header, footer with attribution, Tailwind/HTMX/Chart.js CDN)
+- [x] 5.13 `templates/landing.html` + partials: current_conditions, best_slots, generation_donut, carbon_trend
+- [x] 5.14 `templates/region.html` + slug routing + 404 for unknown slugs
+- [x] 5.15 HTMX polling on each card (`hx-trigger="every 60s"`)
+- [x] 5.16 Region picker (HTMX swap, `hx-push-url="true"`)
+- [x] 5.17 `/status` page — last-ingest per source, Postgres reachability
 
 ### 5D. Polish
-- [ ] 5.18 `templates/404.html`, `templates/500.html`
+- [x] 5.18 `templates/404.html`, `templates/500.html`
 - [ ] 5.19 Mobile-pass: layout doesn't break under 600 px
 - [ ] 5.20 Browser smoke: page loads under 500 ms TTI on a cold cache
 

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Status{% endblock %}
+{% block content %}
+<div class="prose max-w-none mb-4">
+    <h1 class="text-3xl font-bold mb-1">Status</h1>
+    <p class="text-base-content/70">Last-ingest snapshot per source. Updated on page load.</p>
+</div>
+
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+    <div class="card bg-base-100 shadow-sm">
+        <div class="card-body p-4">
+            <div class="text-sm uppercase text-base-content/60">Database</div>
+            <div class="text-2xl font-bold {{ 'text-success' if db_ok else 'text-error' }}">
+                {{ "ok" if db_ok else "DOWN" }}
+            </div>
+        </div>
+    </div>
+    <div class="card bg-base-100 shadow-sm">
+        <div class="card-body p-4">
+            <div class="text-sm uppercase text-base-content/60">Now</div>
+            <div class="text-2xl font-bold">{{ now_utc.strftime("%Y-%m-%d %H:%M") }} UTC</div>
+        </div>
+    </div>
+</div>
+
+<div class="overflow-x-auto">
+    <table class="table table-zebra">
+        <thead>
+            <tr>
+                <th>Source</th>
+                <th>Last period ingested</th>
+                <th>Most recent ingest</th>
+                <th>Row count</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for li in last_ingests %}
+            <tr>
+                <td><code>{{ li.source }}</code></td>
+                <td>{{ li.last_period_utc.strftime("%Y-%m-%d %H:%M") if li.last_period_utc else "—" }}</td>
+                <td>{{ li.last_ingest_utc.strftime("%Y-%m-%d %H:%M:%S") if li.last_ingest_utc else "—" }}</td>
+                <td>{{ "{:,}".format(li.row_count) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

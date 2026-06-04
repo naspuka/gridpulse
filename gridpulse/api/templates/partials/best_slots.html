@@ -1,0 +1,72 @@
+<div class="card-body p-4">
+    <div class="flex items-baseline justify-between">
+        <h2 class="card-title">Best slots in the next 24 h — {{ region.name }}</h2>
+        {% if computed_at %}
+            <span class="text-xs text-base-content/60">
+                computed {{ computed_at.strftime("%H:%M") }} UTC
+            </span>
+        {% endif %}
+    </div>
+
+    {% if slots %}
+        {% set cheapest = slots|selectattr("cheapest_rank", "==", 1)|first %}
+        {% set greenest = slots|selectattr("greenest_rank", "==", 1)|first %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 my-3">
+            {% if cheapest %}
+            <div class="rounded-lg border border-base-300 bg-base-200 p-3">
+                <div class="text-xs text-base-content/60 uppercase">Cheapest</div>
+                <div class="text-2xl font-semibold">
+                    {{ "%.2f"|format(cheapest.price_pence_per_kwh_inc_vat) }} p
+                </div>
+                <div class="text-xs text-base-content/70">
+                    {{ cheapest.period_start_utc.strftime("%a %H:%M") }}–{{ cheapest.period_end_utc.strftime("%H:%M") }} UTC
+                </div>
+            </div>
+            {% endif %}
+            {% if greenest %}
+            <div class="rounded-lg border border-base-300 bg-base-200 p-3">
+                <div class="text-xs text-base-content/60 uppercase">Greenest</div>
+                <div class="text-2xl font-semibold">
+                    {{ greenest.forecast_gco2_per_kwh }} gCO₂/kWh
+                </div>
+                <div class="text-xs text-base-content/70">
+                    {{ greenest.period_start_utc.strftime("%a %H:%M") }}–{{ greenest.period_end_utc.strftime("%H:%M") }} UTC
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <details class="mt-2">
+            <summary class="cursor-pointer text-sm text-base-content/70">All ranked slots</summary>
+            <div class="overflow-x-auto mt-2">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Start (UTC)</th>
+                            <th>Price (p/kWh)</th>
+                            <th>gCO₂/kWh</th>
+                            <th>£ rank</th>
+                            <th>🌱 rank</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in slots %}
+                        <tr>
+                            <td>{{ s.period_start_utc.strftime("%a %H:%M") }}</td>
+                            <td>{{ "%.2f"|format(s.price_pence_per_kwh_inc_vat) if s.price_pence_per_kwh_inc_vat is not none else "—" }}</td>
+                            <td>{{ s.forecast_gco2_per_kwh if s.forecast_gco2_per_kwh is not none else "—" }}</td>
+                            <td>{{ s.cheapest_rank or "—" }}</td>
+                            <td>{{ s.greenest_rank or "—" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </details>
+    {% else %}
+        <p class="text-base-content/60">
+            Best-slots mart not yet populated for this region. Comes online once dbt has run
+            with both Agile + Carbon Intensity data.
+        </p>
+    {% endif %}
+</div>
