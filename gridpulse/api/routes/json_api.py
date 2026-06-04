@@ -48,7 +48,7 @@ _RATE = "30/minute"
 # ---------------------------------------------------------------------------
 
 
-def _resolve_region(code: str):  # type: ignore[no-untyped-def]
+def _resolve_region(code: str):
     """`?region=LONDON` → Region, or 400 if unknown."""
     region = queries.get_region_by_canonical_code(code)
     if region is None:
@@ -116,7 +116,7 @@ def carbon_intensity_current(
 
 
 @cache_current
-def _carbon_current_cached(region_id: int):  # type: ignore[no-untyped-def]
+def _carbon_current_cached(region_id: int):
     return queries.get_current_carbon_intensity(region_id)
 
 
@@ -139,7 +139,7 @@ def carbon_intensity_range(
 
 
 @cache_range
-def _carbon_range_cached(region_id: int, from_: datetime, to: datetime):  # type: ignore[no-untyped-def]
+def _carbon_range_cached(region_id: int, from_: datetime, to: datetime):
     return queries.get_carbon_intensity_range(region_id, from_, to)
 
 
@@ -168,7 +168,7 @@ def agile_price_current(
 
 
 @cache_current
-def _agile_current_cached(region_id: int):  # type: ignore[no-untyped-def]
+def _agile_current_cached(region_id: int):
     return queries.get_current_agile_price(region_id)
 
 
@@ -193,7 +193,7 @@ def agile_price_range(
 
 
 @cache_range
-def _agile_range_cached(region_id: int, from_: datetime, to: datetime):  # type: ignore[no-untyped-def]
+def _agile_range_cached(region_id: int, from_: datetime, to: datetime):
     return queries.get_agile_price_range(region_id, from_, to)
 
 
@@ -254,5 +254,5 @@ def best_slots(
 
 
 @cache_current
-def _best_slots_cached(region_id: int):  # type: ignore[no-untyped-def]
+def _best_slots_cached(region_id: int):
     return queries.get_best_slots(region_id)

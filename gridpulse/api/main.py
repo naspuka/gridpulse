@@ -68,7 +68,7 @@ limiter = Limiter(key_func=get_remote_address, default_limits=[])
 
 
 @asynccontextmanager
-async def _lifespan(app: FastAPI):  # type: ignore[no-untyped-def]
+async def _lifespan(app: FastAPI):
     from gridpulse.storage.postgres import close_pool, get_pool
 
     try:

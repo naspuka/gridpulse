@@ -297,6 +297,7 @@ def db_ok() -> bool:
     try:
         with get_pool().connection() as conn, conn.cursor() as cur:
             cur.execute("SELECT 1")
-            return cur.fetchone() == (1,)
+            row = cur.fetchone()
+        return bool(row == (1,))
     except Exception:  # noqa: BLE001 — fail-closed
         return False

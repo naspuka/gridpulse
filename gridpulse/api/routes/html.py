@@ -28,7 +28,7 @@ router = APIRouter(tags=["html"])
 _DEFAULT_AGILE_REGION_SLUG = "london"
 
 
-def _ctx(request: Request, **extra) -> dict:  # type: ignore[no-untyped-def]
+def _ctx(request: Request, **extra) -> dict:
     """Common template context — every page gets the regions list for the picker."""
     return {
         "request": request,
@@ -48,7 +48,7 @@ def landing(request: Request) -> HTMLResponse:
     # National carbon, national generation mix, default-region Agile + best slots.
     national = queries.get_region_by_canonical_code("NATIONAL")
     default_region = queries.get_region_by_slug(_DEFAULT_AGILE_REGION_SLUG)
-    return templates.TemplateResponse(  # type: ignore[no-any-return]
+    return templates.TemplateResponse(
         request,
         name="landing.html",
         context=_ctx(
@@ -69,7 +69,7 @@ def region_page(request: Request, slug: str) -> HTMLResponse:
     region = queries.get_region_by_slug(slug)
     if region is None:
         raise HTTPException(status_code=404, detail=f"unknown region: {slug}")
-    return templates.TemplateResponse(  # type: ignore[no-any-return]
+    return templates.TemplateResponse(
         request,
         name="region.html",
         context=_ctx(
@@ -93,7 +93,7 @@ def partial_current_conditions(request: Request, slug: str) -> HTMLResponse:
     if region is None:
         raise HTTPException(status_code=404)
     current = queries.get_current_carbon_intensity(region.region_id)
-    return templates.TemplateResponse(  # type: ignore[no-any-return]
+    return templates.TemplateResponse(
         request,
         name="partials/current_conditions.html",
         context={"request": request, "region": region, "current": current},
@@ -106,7 +106,7 @@ def partial_best_slots(request: Request, slug: str) -> HTMLResponse:
     if region is None or region.region_id == 0:
         raise HTTPException(status_code=400)
     computed_at, slots = queries.get_best_slots(region.region_id)
-    return templates.TemplateResponse(  # type: ignore[no-any-return]
+    return templates.TemplateResponse(
         request,
         name="partials/best_slots.html",
         context={
@@ -123,7 +123,7 @@ def partial_generation_donut(request: Request) -> HTMLResponse:
     cached = queries.get_current_generation_mix()
     period = cached[0] if cached else None
     fuels = cached[1] if cached else []
-    return templates.TemplateResponse(  # type: ignore[no-any-return]
+    return templates.TemplateResponse(
         request,
         name="partials/generation_donut.html",
         context={"request": request, "period": period, "fuels": fuels},
@@ -138,7 +138,7 @@ def partial_carbon_trend(request: Request, slug: str) -> HTMLResponse:
     to = datetime.now(UTC)
     from_ = to - timedelta(hours=24)
     points = queries.get_carbon_intensity_range(region.region_id, from_, to)
-    return templates.TemplateResponse(  # type: ignore[no-any-return]
+    return templates.TemplateResponse(
         request,
         name="partials/carbon_trend.html",
         context={"request": request, "region": region, "points": points},
@@ -153,7 +153,7 @@ def partial_carbon_trend(request: Request, slug: str) -> HTMLResponse:
 @router.get("/status", response_class=HTMLResponse)
 def status_page(request: Request) -> HTMLResponse:
     last_ingests = queries.get_last_ingests()
-    return templates.TemplateResponse(  # type: ignore[no-any-return]
+    return templates.TemplateResponse(
         request,
         name="status.html",
         context=_ctx(

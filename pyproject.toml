@@ -119,6 +119,17 @@ disallow_any_generics = false
 disallow_any_unimported = false
 disallow_subclassing_any = false
 
+[[tool.mypy.overrides]]
+# FastAPI route handlers: @router.get / @limiter.limit return Any wrappers
+# under follow_imports="skip"; strict mypy complains about "untyped decorator
+# makes function untyped". Templates / route helpers also pass `dict` as
+# generic context. Same trade-off as the Dagster override.
+module = ["gridpulse.api.main", "gridpulse.api.routes.*"]
+disallow_untyped_decorators = false
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_any_generics = false
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra --strict-markers --strict-config"

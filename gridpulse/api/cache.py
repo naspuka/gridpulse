@@ -19,12 +19,12 @@ from typing import Any
 from cachetools import TTLCache
 
 # Modest size; the API surface is small. Bump if we grow it.
-_CURRENT_CACHE: TTLCache = TTLCache(maxsize=256, ttl=30)
+_CURRENT_CACHE: TTLCache[tuple[Any, ...], Any] = TTLCache(maxsize=256, ttl=30)
 # Range queries are heavier and less repetitive; cache for slightly longer.
-_RANGE_CACHE: TTLCache = TTLCache(maxsize=128, ttl=120)
+_RANGE_CACHE: TTLCache[tuple[Any, ...], Any] = TTLCache(maxsize=128, ttl=120)
 
 
-def _hashable_key(args: tuple, kwargs: dict) -> tuple:
+def _hashable_key(args: tuple[Any, ...], kwargs: dict[str, Any]) -> tuple[Any, ...]:
     """Cache key derived from args/kwargs. All values must be hashable —
     we use this only for queries that take ints, strs, datetimes."""
     return args + tuple(sorted(kwargs.items()))
