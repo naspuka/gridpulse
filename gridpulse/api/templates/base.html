@@ -40,6 +40,10 @@
         }
         @media (min-width: 768px) {
             .grid-cards { grid-template-columns: 1fr 1fr; }
+            /* `.intro` is the top row on the landing / region pages —
+               carbon card is a small headline, generation donut deserves
+               more canvas. Mobile (<768px) stays single-column. */
+            .grid-cards.intro { grid-template-columns: 2fr 3fr; }
         }
         .card {
             background: var(--pico-card-background-color);
@@ -80,8 +84,8 @@
         .picker select { margin: 0; max-width: 18rem; }
         .stack { display: flex; flex-direction: column; gap: 0.25rem; }
         .row { display: flex; gap: 0.5rem; align-items: center; }
-        .chart-host { position: relative; height: 220px; }
-        .chart-host.tall { height: 260px; }
+        .chart-host { position: relative; height: 260px; }
+        .chart-host.tall { height: 300px; }
         table { font-size: 0.85rem; }
         details > summary { cursor: pointer; margin-top: 0.5rem; }
         nav strong { font-size: 1.1rem; }
