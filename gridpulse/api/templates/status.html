@@ -1,30 +1,26 @@
 {% extends "base.html" %}
 {% block title %}Status{% endblock %}
 {% block content %}
-<div class="prose max-w-none mb-4">
-    <h1 class="text-3xl font-bold mb-1">Status</h1>
-    <p class="text-base-content/70">Last-ingest snapshot per source. Updated on page load.</p>
+<hgroup>
+    <h1>Status</h1>
+    <p>Last-ingest snapshot per source. Updated on page load.</p>
+</hgroup>
+
+<div class="grid-cards">
+    <article class="card">
+        <div class="meta" style="text-transform: uppercase;">Database</div>
+        <div class="big" style="color: {{ '#16a34a' if db_ok else '#dc2626' }}">
+            {{ "ok" if db_ok else "DOWN" }}
+        </div>
+    </article>
+    <article class="card">
+        <div class="meta" style="text-transform: uppercase;">Now</div>
+        <div class="big" style="font-size: 1.4rem;">{{ now_utc.strftime("%Y-%m-%d %H:%M") }} UTC</div>
+    </article>
 </div>
 
-<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
-    <div class="card bg-base-100 shadow-sm">
-        <div class="card-body p-4">
-            <div class="text-sm uppercase text-base-content/60">Database</div>
-            <div class="text-2xl font-bold {{ 'text-success' if db_ok else 'text-error' }}">
-                {{ "ok" if db_ok else "DOWN" }}
-            </div>
-        </div>
-    </div>
-    <div class="card bg-base-100 shadow-sm">
-        <div class="card-body p-4">
-            <div class="text-sm uppercase text-base-content/60">Now</div>
-            <div class="text-2xl font-bold">{{ now_utc.strftime("%Y-%m-%d %H:%M") }} UTC</div>
-        </div>
-    </div>
-</div>
-
-<div class="overflow-x-auto">
-    <table class="table table-zebra">
+<div style="overflow-x: auto; margin-top: 1rem;">
+    <table>
         <thead>
             <tr>
                 <th>Source</th>

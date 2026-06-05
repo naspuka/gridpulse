@@ -1,30 +1,31 @@
-{# 24h carbon-intensity line chart. #}
-<div class="card-body p-4">
-    <div class="flex items-baseline justify-between">
-        <h2 class="card-title">Carbon intensity — last 24 h ({{ region.name }})</h2>
-        <span class="text-xs text-base-content/60">gCO₂/kWh</span>
+<div class="card-header">
+    <h2>Carbon intensity — last 24 h ({{ region.name }})</h2>
+    <span class="meta">gCO₂/kWh</span>
+</div>
+
+{% if points %}
+    {% set uid = (points[0].period_start_utc.timestamp() if points else 0)|int %}
+    <div class="chart-host tall">
+        <canvas id="trend-{{ uid }}"></canvas>
     </div>
 
-    {% if points %}
-        {% set uid = (points[0].period_start_utc.timestamp() if points else 0)|int %}
-        <div style="height: 240px;">
-            <canvas id="trend-{{ uid }}"></canvas>
-        </div>
+    <script type="application/json" id="trend-data-{{ uid }}">
+    {{ {
+        "labels":   (points | map(attribute="period_start_utc") | map("string") | list),
+        "forecast": (points | map(attribute="forecast_gco2_per_kwh") | list),
+        "actual":   (points | map(attribute="actual_gco2_per_kwh") | list)
+    } | tojson }}
+    </script>
 
-        <script type="application/json" id="trend-data-{{ uid }}">
-        {{ {
-            "labels": (points | map(attribute="period_start_utc") | map("string") | list),
-            "forecast": (points | map(attribute="forecast_gco2_per_kwh") | list),
-            "actual": (points | map(attribute="actual_gco2_per_kwh") | list)
-        } | tojson }}
-        </script>
-
-        <script>
-        (function () {
-            const id = "{{ uid }}";
+    <script>
+    (function () {
+        const id = "{{ uid }}";
+        function render() {
             const el = document.getElementById("trend-" + id);
-            const data = JSON.parse(document.getElementById("trend-data-" + id).textContent);
-            if (!el || typeof Chart === "undefined") { return; }
+            const node = document.getElementById("trend-data-" + id);
+            if (!el || !node) { return; }
+            if (typeof Chart === "undefined") { return setTimeout(render, 100); }
+            const data = JSON.parse(node.textContent);
             const labels = data.labels.map(s => s.slice(11, 16));
             new Chart(el, {
                 type: "line",
@@ -35,22 +36,19 @@
                             label: "actual",
                             data: data.actual,
                             borderColor: "#16a34a",
-                            backgroundColor: "rgba(22, 163, 74, 0.15)",
-                            tension: 0.25,
-                            spanGaps: true
+                            backgroundColor: "rgba(22,163,74,0.15)",
+                            tension: 0.25, spanGaps: true
                         },
                         {
                             label: "forecast",
                             data: data.forecast,
                             borderColor: "#a3a3a3",
-                            borderDash: [3, 3],
-                            tension: 0.25
+                            borderDash: [3, 3], tension: 0.25
                         }
                     ]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    responsive: true, maintainAspectRatio: false,
                     interaction: { mode: "index", intersect: false },
                     plugins: { legend: { position: "top" } },
                     scales: {
@@ -59,9 +57,10 @@
                     }
                 }
             });
-        })();
-        </script>
-    {% else %}
-        <p class="text-base-content/60">Not enough carbon data yet — needs a full 24 h of ingest.</p>
-    {% endif %}
-</div>
+        }
+        render();
+    })();
+    </script>
+{% else %}
+    <p class="meta">Not enough carbon data yet — needs a full 24 h of ingest.</p>
+{% endif %}

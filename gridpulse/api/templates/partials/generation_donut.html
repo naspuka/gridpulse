@@ -1,63 +1,53 @@
-{# Generation mix donut chart — Chart.js, initialised from a JSON island
-   served by the server so the partial works under HTMX swaps. #}
-<div class="card-body p-4">
-    <div class="flex items-baseline justify-between">
-        <h2 class="card-title">Generation mix (national)</h2>
-        {% if period %}
-            <span class="text-xs text-base-content/60">
-                {{ period.strftime("%H:%M") }} UTC
-            </span>
-        {% endif %}
+<div class="card-header">
+    <h2>Generation mix (national)</h2>
+    {% if period %}<span class="meta">{{ period.strftime("%H:%M") }} UTC</span>{% endif %}
+</div>
+
+{% if fuels %}
+    {% set uid = (period.timestamp() if period else 0)|int %}
+    <div class="chart-host">
+        <canvas id="genmix-{{ uid }}"></canvas>
     </div>
 
-    {% if fuels %}
-        {% set unique_id = (period.timestamp() if period else 0)|int %}
-        <div class="max-w-xs mx-auto" style="height: 220px;">
-            <canvas id="genmix-{{ unique_id }}"></canvas>
-        </div>
+    <script type="application/json" id="genmix-data-{{ uid }}">
+    {{ {
+        "labels": (fuels | map(attribute="fuel") | list),
+        "mw":     (fuels | map(attribute="mw") | list),
+        "renewable": (fuels | map(attribute="is_renewable") | list)
+    } | tojson }}
+    </script>
 
-        {# Server-rendered data island. Chart.js reads on partial mount. #}
-        <script type="application/json" id="genmix-data-{{ unique_id }}">
-        {{ {
-            "labels": (fuels | map(attribute="fuel") | list),
-            "mw": (fuels | map(attribute="mw") | list),
-            "renewable": (fuels | map(attribute="is_renewable") | list)
-        } | tojson }}
-        </script>
-
-        <script>
-        (function () {
-            const id = "{{ unique_id }}";
+    <script>
+    (function () {
+        const id = "{{ uid }}";
+        function render() {
             const el = document.getElementById("genmix-" + id);
-            const data = JSON.parse(document.getElementById("genmix-data-" + id).textContent);
-            if (!el || typeof Chart === "undefined") { return; }
-            const colours = data.renewable.map(r => r ? "#22c55e" : "#71717a");
+            const node = document.getElementById("genmix-data-" + id);
+            if (!el || !node) { return; }
+            if (typeof Chart === "undefined") {
+                // Chart.js still loading — try again shortly.
+                return setTimeout(render, 100);
+            }
+            const data = JSON.parse(node.textContent);
+            const colours = data.renewable.map(r => r ? "#16a34a" : "#737373");
             new Chart(el, {
                 type: "doughnut",
                 data: {
                     labels: data.labels,
-                    datasets: [{
-                        data: data.mw,
-                        backgroundColor: colours,
-                        borderWidth: 1
-                    }]
+                    datasets: [{ data: data.mw, backgroundColor: colours, borderWidth: 1 }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    responsive: true, maintainAspectRatio: false,
                     plugins: {
                         legend: { position: "right", labels: { boxWidth: 12, font: { size: 11 } } },
-                        tooltip: {
-                            callbacks: {
-                                label: (ctx) => `${ctx.label}: ${ctx.parsed.toLocaleString()} MW`
-                            }
-                        }
+                        tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${ctx.parsed.toLocaleString()} MW` } }
                     }
                 }
             });
-        })();
-        </script>
-    {% else %}
-        <p class="text-base-content/60">Generation mix mart not yet populated.</p>
-    {% endif %}
-</div>
+        }
+        render();
+    })();
+    </script>
+{% else %}
+    <p class="meta">Generation mix mart not yet populated.</p>
+{% endif %}

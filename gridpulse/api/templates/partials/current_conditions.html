@@ -1,30 +1,22 @@
-<div class="card-body p-4">
-    <div class="flex items-baseline justify-between">
-        <h2 class="card-title">Carbon intensity</h2>
-        <span class="text-xs text-base-content/60">{{ region.name }}</span>
-    </div>
-    {% if current %}
-        {% set idx = current.intensity_index %}
-        {% set badge_class =
-            'badge-success' if idx in ('very low', 'low') else
-            'badge-warning' if idx == 'moderate' else
-            'badge-error' %}
-        <div class="my-2 flex items-end gap-3">
-            <div class="text-4xl font-bold leading-none">
-                {{ current.actual_gco2_per_kwh or current.forecast_gco2_per_kwh }}
-            </div>
-            <div class="text-sm text-base-content/70 leading-none mb-1">
-                gCO₂&nbsp;/&nbsp;kWh
-                {% if current.actual_gco2_per_kwh is none %}<em>(forecast)</em>{% endif %}
-            </div>
-        </div>
-        <div class="flex gap-2 items-center">
-            <span class="badge {{ badge_class }} badge-sm uppercase tracking-wide">{{ idx }}</span>
-            <span class="text-xs text-base-content/60">
-                {{ current.period_start_utc.strftime("%H:%M") }}–{{ current.period_end_utc.strftime("%H:%M") }} UTC
-            </span>
-        </div>
-    {% else %}
-        <p class="text-base-content/60">No data available yet — first ingest pending.</p>
-    {% endif %}
+<div class="card-header">
+    <h2>Carbon intensity</h2>
+    <span class="meta">{{ region.name }}</span>
 </div>
+{% if current %}
+    {% set idx = current.intensity_index %}
+    {% set badge_class = 'ok' if idx in ('very low', 'low') else 'warn' if idx == 'moderate' else 'bad' %}
+    <div class="row" style="margin-bottom: 0.5rem;">
+        <span class="big">{{ current.actual_gco2_per_kwh or current.forecast_gco2_per_kwh }}</span>
+        <span class="meta">
+            gCO₂/kWh{% if current.actual_gco2_per_kwh is none %} <em>(forecast)</em>{% endif %}
+        </span>
+    </div>
+    <div class="row">
+        <span class="badge {{ badge_class }}">{{ idx }}</span>
+        <span class="meta">
+            {{ current.period_start_utc.strftime("%H:%M") }}–{{ current.period_end_utc.strftime("%H:%M") }} UTC
+        </span>
+    </div>
+{% else %}
+    <p class="meta">No data available yet — first ingest pending.</p>
+{% endif %}

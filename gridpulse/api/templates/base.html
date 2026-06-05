@@ -1,62 +1,108 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}GridPulse{% endblock %} — live UK energy intelligence</title>
     <meta name="description" content="Live UK electricity generation mix, regional carbon intensity, and Octopus Agile prices.">
 
-    {# Tailwind + DaisyUI via CDN (no build step — CLAUDE.md stack lock). #}
-    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    {# Pico CSS — 10 KB, semantic, no JS runtime. Replaces the Tailwind Play
+       CDN which was JIT-compiling utilities in the browser (slow / blocked
+       on mobile). HTMX + Chart.js are still CDN. #}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2.0.6/css/pico.min.css">
 
-    {# HTMX for partial swaps + Chart.js via CDN. Both load deferred to keep
-       first paint snappy. #}
     <script defer src="https://unpkg.com/htmx.org@1.9.12"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
-    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-    {% block head %}{% endblock %}
+    <style>
+        :root { --gp-card-pad: 1rem; --gp-radius: 0.5rem; }
+        .grid-cards {
+            display: grid; gap: 1rem; grid-template-columns: 1fr;
+            margin-top: 1rem;
+        }
+        @media (min-width: 768px) {
+            .grid-cards { grid-template-columns: 1fr 1fr; }
+        }
+        .card {
+            background: var(--pico-card-background-color);
+            padding: var(--gp-card-pad);
+            border-radius: var(--gp-radius);
+            box-shadow: var(--pico-card-box-shadow);
+        }
+        .card.full { grid-column: 1 / -1; }
+        .card-header {
+            display: flex; align-items: baseline; justify-content: space-between;
+            gap: 0.5rem; margin-bottom: 0.5rem;
+        }
+        .card h2 { font-size: 1.1rem; margin: 0; }
+        .meta { color: var(--pico-muted-color); font-size: 0.85rem; }
+        .big { font-size: 2.25rem; font-weight: 700; line-height: 1; }
+        .skeleton {
+            height: 8rem; border-radius: var(--gp-radius);
+            background: linear-gradient(90deg,
+                var(--pico-card-background-color),
+                var(--pico-muted-border-color),
+                var(--pico-card-background-color));
+            background-size: 400% 100%;
+            animation: skel 1.5s ease-in-out infinite;
+        }
+        @keyframes skel { 0% { background-position: 100% 0 } 100% { background-position: -100% 0 } }
+        .badge {
+            display: inline-block; padding: 0.15rem 0.55rem; border-radius: 9999px;
+            font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em;
+            font-weight: 600;
+        }
+        .badge.ok      { background: #d1fae5; color: #065f46; }
+        .badge.warn    { background: #fef3c7; color: #92400e; }
+        .badge.bad     { background: #fee2e2; color: #991b1b; }
+        .picker { display: flex; align-items: center; gap: 0.75rem; margin: 0.5rem 0 0; }
+        .picker label { margin: 0; }
+        .picker select { margin: 0; max-width: 18rem; }
+        .stack { display: flex; flex-direction: column; gap: 0.25rem; }
+        .row { display: flex; gap: 0.5rem; align-items: center; }
+        .chart-host { position: relative; height: 220px; }
+        .chart-host.tall { height: 260px; }
+        table { font-size: 0.85rem; }
+        details > summary { cursor: pointer; margin-top: 0.5rem; }
+        nav strong { font-size: 1.1rem; }
+    </style>
 </head>
-<body class="bg-base-200 text-base-content min-h-screen flex flex-col">
+<body>
 
-    <header class="navbar bg-base-100 border-b border-base-300">
-        <div class="flex-1">
-            <a href="/" class="btn btn-ghost text-xl">⚡ GridPulse</a>
-        </div>
-        <div class="flex-none">
-            <ul class="menu menu-horizontal px-1 hidden sm:flex">
-                <li><a href="/" {% if request.url.path == "/" %}class="active"{% endif %}>Now</a></li>
-                <li><a href="/region/london" {% if "/region/" in request.url.path %}class="active"{% endif %}>By region</a></li>
-                <li><a href="/status" {% if request.url.path == "/status" %}class="active"{% endif %}>Status</a></li>
-                <li><a href="/docs">API</a></li>
-            </ul>
-        </div>
-    </header>
+<header class="container">
+    <nav>
+        <ul>
+            <li><a href="/" style="text-decoration: none;"><strong>⚡ GridPulse</strong></a></li>
+        </ul>
+        <ul>
+            <li><a href="/" {% if request.url.path == "/" %}aria-current="page"{% endif %}>Now</a></li>
+            <li><a href="/region/london" {% if "/region/" in request.url.path %}aria-current="page"{% endif %}>By region</a></li>
+            <li><a href="/status" {% if request.url.path == "/status" %}aria-current="page"{% endif %}>Status</a></li>
+            <li><a href="/docs">API</a></li>
+        </ul>
+    </nav>
+</header>
 
-    <main class="flex-grow container mx-auto px-4 py-6 max-w-6xl">
-        {% block content %}{% endblock %}
-    </main>
+<main class="container">
+    {% block content %}{% endblock %}
+</main>
 
-    <footer class="bg-base-100 border-t border-base-300 text-sm py-6 mt-auto">
-        <div class="container mx-auto px-4 max-w-6xl">
-            <p class="mb-2">
-                <strong>Attribution</strong> —
-                Carbon intensity data from the
-                <a href="https://carbonintensity.org.uk" class="link link-primary" rel="noopener">Carbon Intensity API</a>,
-                licensed
-                <a href="https://creativecommons.org/licenses/by/4.0/" class="link link-primary" rel="noopener">CC BY 4.0</a>.
-                Generation mix from
-                <a href="https://www.neso.energy" class="link link-primary" rel="noopener">NESO</a>.
-                Tariff data from
-                <a href="https://octopus.energy" class="link link-primary" rel="noopener">Octopus Energy</a>.
-            </p>
-            <p class="text-base-content/60">
-                Source code on <a href="https://github.com/naspuka/gridpulse" class="link" rel="noopener">GitHub</a>.
-                Updated {{ now_utc.strftime("%Y-%m-%d %H:%M") }} UTC.
-            </p>
-        </div>
-    </footer>
+<footer class="container">
+    <hr>
+    <p class="meta">
+        <strong>Attribution.</strong>
+        Carbon intensity from the
+        <a href="https://carbonintensity.org.uk" rel="noopener">Carbon Intensity API</a>,
+        licensed
+        <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener">CC BY 4.0</a>.
+        Generation mix from <a href="https://www.neso.energy" rel="noopener">NESO</a>.
+        Tariff data from <a href="https://octopus.energy" rel="noopener">Octopus Energy</a>.
+    </p>
+    <p class="meta">
+        <a href="https://github.com/naspuka/gridpulse" rel="noopener">Source on GitHub</a>
+        · Updated {{ now_utc.strftime("%Y-%m-%d %H:%M") }} UTC
+    </p>
+</footer>
 
 </body>
 </html>
