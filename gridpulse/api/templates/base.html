@@ -15,7 +15,25 @@
     <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
     <style>
-        :root { --gp-card-pad: 1rem; --gp-radius: 0.5rem; }
+        :root {
+            --gp-card-pad: 1rem;
+            --gp-radius: 0.5rem;
+            /* Compact the Pico defaults a touch — the old Tailwind theme
+               sat around 14-15px effective; Pico v2 lands at ~17px. */
+            --pico-font-size: 93.75%;          /* 15px base */
+            --pico-typography-spacing-vertical: 0.75rem;
+        }
+        /* Belt-and-braces: nothing should ever push the document wider
+           than the viewport. Kills the 1-2px horizontal scroll that
+           Chart.js's right-positioned legend was causing. */
+        html, body { overflow-x: hidden; }
+        /* Tighter cap than Pico's xl-screen default so the layout feels
+           focused on a desktop monitor without going edge-to-edge. */
+        body > header.container,
+        body > main.container,
+        body > footer.container {
+            max-width: 1080px;
+        }
         .grid-cards {
             display: grid; gap: 1rem; grid-template-columns: 1fr;
             margin-top: 1rem;
@@ -28,6 +46,8 @@
             padding: var(--gp-card-pad);
             border-radius: var(--gp-radius);
             box-shadow: var(--pico-card-box-shadow);
+            overflow: hidden;              /* contain Chart.js spillover */
+            min-width: 0;                  /* let grid items shrink properly */
         }
         .card.full { grid-column: 1 / -1; }
         .card-header {
