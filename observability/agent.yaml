@@ -1,0 +1,84 @@
+# Grafana Agent config — single binary, ships metrics + logs to Grafana Cloud.
+#
+# Three pipelines:
+# 1. node_exporter — host CPU/mem/disk/network metrics (lightweight, free tier OK)
+# 2. postgres_exporter — pg_stat_database, table sizes, connection counts
+# 3. logs — tails every Docker container's stdout/stderr via Loki agent
+#
+# Everything is configured via env vars so no creds end up in source control.
+# Substituted from /etc/gridpulse/.env at container start.
+
+server:
+  log_level: info
+
+# ---------------------------------------------------------------------------
+# Metrics
+# ---------------------------------------------------------------------------
+metrics:
+  wal_directory: /tmp/agent
+  global:
+    scrape_interval: 60s
+    external_labels:
+      cluster: gridpulse
+      env: ${ENVIRONMENT:-production}
+    remote_write:
+      - url: ${GRAFANA_PROMETHEUS_URL}
+        basic_auth:
+          username: ${GRAFANA_PROMETHEUS_USERNAME}
+          password: ${GRAFANA_TOKEN}
+
+  configs:
+    - name: gridpulse
+      scrape_configs:
+        # Agent's own metrics
+        - job_name: integrations/agent
+          static_configs:
+            - targets: ["127.0.0.1:12345"]
+              labels:
+                instance: gridpulse-host
+
+        # Postgres exporter (we run it as a sidecar in compose)
+        - job_name: postgres
+          static_configs:
+            - targets: ["postgres-exporter:9187"]
+              labels:
+                instance: gridpulse-postgres
+
+        # Node exporter sidecar
+        - job_name: node
+          static_configs:
+            - targets: ["node-exporter:9100"]
+              labels:
+                instance: gridpulse-host
+
+# ---------------------------------------------------------------------------
+# Logs — every Docker container's stdout/stderr → Loki
+# ---------------------------------------------------------------------------
+logs:
+  positions_directory: /tmp/agent-positions
+  configs:
+    - name: gridpulse
+      clients:
+        - url: ${GRAFANA_LOKI_URL}
+          basic_auth:
+            username: ${GRAFANA_LOKI_USERNAME}
+            password: ${GRAFANA_TOKEN}
+          external_labels:
+            cluster: gridpulse
+            env: ${ENVIRONMENT:-production}
+
+      scrape_configs:
+        - job_name: docker
+          docker_sd_configs:
+            - host: unix:///var/run/docker.sock
+              refresh_interval: 30s
+          relabel_configs:
+            # Use the container name as the log stream's label.
+            - source_labels: [__meta_docker_container_name]
+              regex: /(.*)
+              target_label: container
+            - source_labels: [__meta_docker_container_log_stream]
+              target_label: stream
+            # Compose service name as a separate label (eg. app, dagster-daemon)
+            - source_labels: [__meta_docker_container_label_com_docker_compose_service]
+              target_label: service

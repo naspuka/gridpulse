@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" font-family="-apple-system,BlinkMacSystemFont,sans-serif">
+  <rect width="800" height="500" fill="#0f172a"/>
+  <rect width="800" height="48" fill="#1e293b"/>
+  <text x="24" y="32" font-size="16" font-weight="700" fill="#e2e8f0">Dagster · gridpulse</text>
+  <text x="640" y="32" font-size="12" fill="#94a3b8">Assets · Runs · Schedules · Jobs</text>
+  <text x="24" y="86" font-size="20" font-weight="700" fill="#e2e8f0">Asset graph</text>
+  <g font-size="11" fill="#0f172a">
+    <rect x="40" y="110" width="160" height="44" rx="6" fill="#60a5fa"/><text x="58" y="138">carbon_intensity_national</text>
+    <rect x="40" y="170" width="160" height="44" rx="6" fill="#60a5fa"/><text x="58" y="198">carbon_intensity_regional</text>
+    <rect x="40" y="230" width="160" height="44" rx="6" fill="#60a5fa"/><text x="78" y="258">generation_mix</text>
+    <rect x="40" y="290" width="160" height="44" rx="6" fill="#60a5fa"/><text x="86" y="318">agile_price</text>
+    <rect x="290" y="170" width="160" height="44" rx="6" fill="#a78bfa"/><text x="338" y="198">dbt_build</text>
+    <rect x="290" y="230" width="160" height="44" rx="6" fill="#fbbf24"/><text x="312" y="258">archive_to_iceberg</text>
+    <rect x="290" y="290" width="160" height="44" rx="6" fill="#f87171"/><text x="316" y="318">backup_postgres</text>
+    <rect x="540" y="200" width="160" height="44" rx="6" fill="#34d399"/><text x="572" y="228">expire_snapshots</text>
+  </g>
+  <g stroke="#475569" stroke-width="1.5" fill="none">
+    <line x1="200" y1="132" x2="290" y2="192"/>
+    <line x1="200" y1="192" x2="290" y2="192"/>
+    <line x1="200" y1="252" x2="290" y2="192"/>
+    <line x1="200" y1="312" x2="290" y2="192"/>
+    <line x1="200" y1="252" x2="290" y2="252"/>
+    <line x1="450" y1="252" x2="540" y2="222"/>
+  </g>
+  <text x="24" y="394" font-size="14" font-weight="700" fill="#e2e8f0">Recent runs</text>
+  <g font-size="11" fill="#cbd5e1">
+    <text x="24" y="420">carbon_intensity_ingest · 11:32 UTC · 4.2s · ✓</text>
+    <text x="24" y="438">generation_mix_ingest  · 11:35 UTC · 2.1s · ✓</text>
+    <text x="24" y="456">backup                 · 03:30 UTC · 47s  · ✓ (uploaded 152 MB)</text>
+    <text x="24" y="474">archive                · 02:00 UTC · 18s  · ✓</text>
+  </g>
+  <text x="620" y="474" font-size="11" font-style="italic" fill="#64748b">Placeholder</text>
+</svg>

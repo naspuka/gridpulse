@@ -31,7 +31,11 @@ def init_sentry(component: str) -> None:
         return
 
     environment = os.environ.get("ENVIRONMENT", "local")
-    release = os.environ.get("GIT_SHA", "dev")
+    # Match the format the deploy workflow uses when creating the release
+    # (`getsentry/action-release` with version=`gridpulse@<sha>`). If they
+    # diverge, Sentry shows "release not found" warnings on every event.
+    git_sha = os.environ.get("GIT_SHA", "dev")
+    release = f"gridpulse@{git_sha}"
     traces_rate = float(os.environ.get("SENTRY_TRACES_RATE", "0.0"))
 
     sentry_sdk.init(

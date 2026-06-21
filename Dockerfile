@@ -58,6 +58,22 @@ CMD ["uvicorn", "gridpulse.api.main:app", "--host", "0.0.0.0", "--port", "8000",
 # ---------------------------------------------------------------------------
 FROM base AS dagster
 
+# postgresql-client gives us `pg_dump` for the nightly backup asset.
+# Pinned to v16 to match the server (mismatched majors emit a warning and,
+# on a wide-enough gap, refuse to dump). Debian bookworm ships v15 by
+# default — pull v16 from PGDG.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends curl gnupg \
+ && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+      | gpg --dearmor -o /usr/share/keyrings/pgdg.gpg \
+ && echo "deb [signed-by=/usr/share/keyrings/pgdg.gpg] http://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" \
+      > /etc/apt/sources.list.d/pgdg.list \
+ && apt-get update \
+ && apt-get install -y --no-install-recommends postgresql-client-16 \
+ && apt-get purge -y curl gnupg \
+ && apt-get autoremove -y \
+ && rm -rf /var/lib/apt/lists/*
+
 # Heavy deps: Dagster, dbt, PyIceberg, DuckDB, PyArrow.
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-editable --no-dev --group ingestion

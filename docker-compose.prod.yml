@@ -45,3 +45,60 @@ services:
 
   postgres:
     env_file: /etc/gridpulse/.env
+
+  # ---------- Observability sidecars (Phase 6 — Grafana Cloud) ----------
+  # All three live behind the `observability` profile so a plain
+  # `docker compose up -d` ignores them. Turn them on later with:
+  #   docker compose --profile observability -f docker-compose.yml -f docker-compose.prod.yml up -d
+  # after dropping the 5 GRAFANA_* vars into /etc/gridpulse/.env.
+
+  grafana-agent:
+    profiles: ["observability"]
+    image: grafana/agent:v0.42.0
+    container_name: gridpulse-grafana-agent
+    command: ["-config.file=/etc/agent/agent.yaml", "-config.expand-env=true"]
+    volumes:
+      - ./observability/agent.yaml:/etc/agent/agent.yaml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - agent_data:/tmp
+    env_file: /etc/gridpulse/.env
+    environment:
+      ENVIRONMENT: production
+      HOSTNAME: gridpulse-host
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres-exporter:
+    profiles: ["observability"]
+    image: prometheuscommunity/postgres-exporter:v0.15.0
+    container_name: gridpulse-postgres-exporter
+    environment:
+      DATA_SOURCE_URI: "postgres:5432/${POSTGRES_DB:-gridpulse}?sslmode=disable"
+      DATA_SOURCE_USER: ${POSTGRES_USER:-gridpulse}
+      DATA_SOURCE_PASS: ${POSTGRES_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    expose:
+      - "9187"
+    restart: unless-stopped
+
+  node-exporter:
+    profiles: ["observability"]
+    image: prom/node-exporter:v1.8.2
+    container_name: gridpulse-node-exporter
+    # Read host filesystem + proc to expose real metrics, not the container's.
+    command:
+      - "--path.rootfs=/host"
+      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($|/)"
+    volumes:
+      - /:/host:ro,rslave
+    pid: host
+    expose:
+      - "9100"
+    restart: unless-stopped
+
+volumes:
+  agent_data:

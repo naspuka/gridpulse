@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" font-family="-apple-system,BlinkMacSystemFont,sans-serif">
+  <rect width="800" height="500" fill="#f5f7fa"/>
+  <rect width="800" height="56" fill="#fff" stroke="#e3e8ef"/>
+  <text x="24" y="36" font-size="18" font-weight="700" fill="#0f172a">⚡ GridPulse · Status</text>
+  <text x="24" y="100" font-size="26" font-weight="700" fill="#0f172a">Pipeline status</text>
+  <text x="24" y="124" font-size="13" fill="#64748b">Last successful ingest per source.</text>
+  <rect x="24" y="150" width="752" height="320" rx="8" fill="#fff" stroke="#e3e8ef"/>
+  <g font-size="14" fill="#0f172a">
+    <text x="48" y="190" font-weight="600">Source</text>
+    <text x="320" y="190" font-weight="600">Last ingest</text>
+    <text x="540" y="190" font-weight="600">Age</text>
+    <text x="660" y="190" font-weight="600">Status</text>
+    <line x1="48" y1="200" x2="752" y2="200" stroke="#e3e8ef"/>
+    <text x="48" y="232">Carbon Intensity</text><text x="320" y="232">2026-06-21 11:32 UTC</text><text x="540" y="232">3m ago</text>
+    <rect x="660" y="217" width="56" height="20" rx="10" fill="#d1fae5"/><text x="678" y="232" font-size="11" font-weight="700" fill="#065f46">OK</text>
+    <text x="48" y="272">NESO generation mix</text><text x="320" y="272">2026-06-21 11:35 UTC</text><text x="540" y="272">0m ago</text>
+    <rect x="660" y="257" width="56" height="20" rx="10" fill="#d1fae5"/><text x="678" y="272" font-size="11" font-weight="700" fill="#065f46">OK</text>
+    <text x="48" y="312">Octopus Agile (national)</text><text x="320" y="312">2026-06-20 16:31 UTC</text><text x="540" y="312">19h ago</text>
+    <rect x="660" y="297" width="56" height="20" rx="10" fill="#d1fae5"/><text x="678" y="312" font-size="11" font-weight="700" fill="#065f46">OK</text>
+    <text x="48" y="352">Iceberg archive</text><text x="320" y="352">2026-06-21 02:00 UTC</text><text x="540" y="352">9h ago</text>
+    <rect x="660" y="337" width="56" height="20" rx="10" fill="#d1fae5"/><text x="678" y="352" font-size="11" font-weight="700" fill="#065f46">OK</text>
+    <text x="48" y="392">Postgres backup</text><text x="320" y="392">2026-06-21 03:30 UTC</text><text x="540" y="392">8h ago</text>
+    <rect x="660" y="377" width="56" height="20" rx="10" fill="#d1fae5"/><text x="678" y="392" font-size="11" font-weight="700" fill="#065f46">OK</text>
+  </g>
+  <text x="48" y="440" font-size="12" fill="#64748b">App build: deadbeef · Postgres: connected · Iceberg catalog: 3 tables</text>
+  <text x="540" y="440" font-size="11" font-style="italic" fill="#64748b">Placeholder</text>
+</svg>

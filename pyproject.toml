@@ -35,6 +35,9 @@ ingestion = [
     "pyiceberg[s3fs,sql-postgres,pyarrow]>=0.7",
     "duckdb>=1.0",
     "pyarrow>=17.0",
+    # boto3 — backup_postgres asset uploads to R2 via the S3 API. pyiceberg
+    # pulls botocore but not boto3 itself; we want the higher-level S3 client.
+    "boto3>=1.35",
 ]
 
 # Dev-only — never installed in prod images.
@@ -102,6 +105,8 @@ module = [
     "dbt.*",
     "slowapi.*",
     "psycopg_pool.*",
+    "boto3.*",
+    "botocore.*",
 ]
 ignore_missing_imports = true
 follow_imports = "skip"        # don't walk into them — strict-mypy is otherwise slow

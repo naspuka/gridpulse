@@ -10,6 +10,7 @@ from .assets import (
     carbon_intensity_regional,
     generation_mix,
 )
+from .backup_assets import backup_postgres
 from .dbt_assets import dbt_build
 from .iceberg_assets import archive_to_iceberg, expire_snapshots
 
@@ -113,6 +114,23 @@ expire_snapshots_weekly_schedule = ScheduleDefinition(
 )
 
 
+# Postgres backup — daily at 03:30 UTC. Runs after the 02:00 Iceberg archive
+# (so the dump captures a consistent post-archive state) and before the 04:00
+# dbt build (so a dbt failure doesn't block the backup). R2 lifecycle rules
+# handle retention (30 days for dailies; 12 months for the 1st-of-month copy).
+_backup_postgres_job = define_asset_job(
+    name="backup",
+    selection=AssetSelection.assets(backup_postgres),
+)
+backup_postgres_daily_schedule = ScheduleDefinition(
+    name="backup_daily",
+    job=_backup_postgres_job,
+    cron_schedule="30 3 * * *",
+    execution_timezone="UTC",
+    description="Nightly pg_dump → R2 at 03:30 UTC. Retention via R2 lifecycle.",
+)
+
+
 defs = Definitions(
     assets=[
         carbon_intensity_national,
@@ -122,6 +140,7 @@ defs = Definitions(
         dbt_build,
         archive_to_iceberg,
         expire_snapshots,
+        backup_postgres,
     ],
     jobs=[
         _carbon_intensity_job,
@@ -130,6 +149,7 @@ defs = Definitions(
         _dbt_build_job,
         _archive_to_iceberg_job,
         _expire_snapshots_job,
+        _backup_postgres_job,
     ],
     schedules=[
         carbon_intensity_30min_schedule,
@@ -138,5 +158,6 @@ defs = Definitions(
         dbt_build_daily_schedule,
         archive_to_iceberg_daily_schedule,
         expire_snapshots_weekly_schedule,
+        backup_postgres_daily_schedule,
     ],
 )

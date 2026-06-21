@@ -1,0 +1,137 @@
+{
+  "_comment": "Import in Grafana Cloud via Alerting → Alert rules → Import. Each rule queries Prometheus (`grafanacloud-prom`) and fires to the default contact point (Grafana Cloud auto-creates an email one tied to your signup address; reroute to Slack/etc. via Contact points if you like).",
+  "groups": [
+    {
+      "title": "gridpulse-pipeline-health",
+      "folder": "GridPulse",
+      "interval": "5m",
+      "rules": [
+        {
+          "uid": "gp-stale-carbon-intensity",
+          "title": "Stale carbon_intensity ingest",
+          "condition": "C",
+          "for": "30m",
+          "annotations": {
+            "summary": "carbon_intensity hasn't ingested in > 90 min",
+            "description": "Expected every 30 min; three misses suggests a stuck Dagster schedule or upstream API outage. Check Dagster UI → Runs and https://api.carbonintensity.org.uk/intensity."
+          },
+          "labels": { "severity": "warning", "component": "ingestion" },
+          "data": [
+            {
+              "refId": "A",
+              "queryType": "",
+              "relativeTimeRange": { "from": 600, "to": 0 },
+              "datasourceUid": "grafanacloud-prom",
+              "model": {
+                "expr": "time() - max(pg_stat_user_tables_last_autovacuum{relname=\"carbon_intensity\"})",
+                "refId": "A"
+              }
+            },
+            {
+              "refId": "C",
+              "queryType": "",
+              "datasourceUid": "__expr__",
+              "relativeTimeRange": { "from": 0, "to": 0 },
+              "model": {
+                "type": "threshold",
+                "refId": "C",
+                "conditions": [
+                  {
+                    "evaluator": { "params": [5400], "type": "gt" },
+                    "operator": { "type": "and" },
+                    "query": { "params": ["A"] },
+                    "reducer": { "params": [], "type": "last" },
+                    "type": "query"
+                  }
+                ],
+                "expression": "A"
+              }
+            }
+          ]
+        },
+        {
+          "uid": "gp-stale-generation-mix",
+          "title": "Stale generation_mix ingest",
+          "condition": "C",
+          "for": "30m",
+          "annotations": {
+            "summary": "generation_mix hasn't ingested in > 90 min",
+            "description": "Expected every 30 min. Check Dagster UI and NESO Data Portal status."
+          },
+          "labels": { "severity": "warning", "component": "ingestion" },
+          "data": [
+            {
+              "refId": "A",
+              "datasourceUid": "grafanacloud-prom",
+              "relativeTimeRange": { "from": 600, "to": 0 },
+              "model": {
+                "expr": "time() - max(pg_stat_user_tables_last_autovacuum{relname=\"generation_mix\"})",
+                "refId": "A"
+              }
+            },
+            {
+              "refId": "C",
+              "datasourceUid": "__expr__",
+              "relativeTimeRange": { "from": 0, "to": 0 },
+              "model": {
+                "type": "threshold",
+                "refId": "C",
+                "conditions": [
+                  {
+                    "evaluator": { "params": [5400], "type": "gt" },
+                    "operator": { "type": "and" },
+                    "query": { "params": ["A"] },
+                    "reducer": { "params": [], "type": "last" },
+                    "type": "query"
+                  }
+                ],
+                "expression": "A"
+              }
+            }
+          ]
+        },
+        {
+          "uid": "gp-stale-agile-price",
+          "title": "Stale agile_price ingest",
+          "condition": "C",
+          "for": "2h",
+          "annotations": {
+            "summary": "agile_price hasn't ingested in > 28 hours",
+            "description": "Agile ingests once a day at 16:30 UTC. Missing means Octopus published late or the schedule misfired."
+          },
+          "labels": { "severity": "warning", "component": "ingestion" },
+          "data": [
+            {
+              "refId": "A",
+              "datasourceUid": "grafanacloud-prom",
+              "relativeTimeRange": { "from": 600, "to": 0 },
+              "model": {
+                "expr": "time() - max(pg_stat_user_tables_last_autovacuum{relname=\"agile_price\"})",
+                "refId": "A"
+              }
+            },
+            {
+              "refId": "C",
+              "datasourceUid": "__expr__",
+              "relativeTimeRange": { "from": 0, "to": 0 },
+              "model": {
+                "type": "threshold",
+                "refId": "C",
+                "conditions": [
+                  {
+                    "evaluator": { "params": [100800], "type": "gt" },
+                    "operator": { "type": "and" },
+                    "query": { "params": ["A"] },
+                    "reducer": { "params": [], "type": "last" },
+                    "type": "query"
+                  }
+                ],
+                "expression": "A"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

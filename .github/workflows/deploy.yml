@@ -128,3 +128,25 @@ jobs:
           done
           echo "::error::prod /healthz never returned 200"
           exit 1
+
+      # ----------------------------------------------------------------------
+      # Sentry release tracking. Each successful deploy creates a release
+      # `gridpulse@<sha>` in Sentry and associates the commits between the
+      # previous release and this one. Combined with the `release=GIT_SHA`
+      # tag in `init_sentry`, this lets the Sentry UI link a traceback to
+      # the exact commit that introduced the regression.
+      #
+      # No-op if SENTRY_AUTH_TOKEN is unset — keeps forks / fresh clones
+      # green without needing Sentry creds.
+      # ----------------------------------------------------------------------
+      - name: Create Sentry release
+        if: ${{ secrets.SENTRY_AUTH_TOKEN != '' }}
+        uses: getsentry/action-release@v1
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+        with:
+          environment: production
+          version: gridpulse@${{ github.sha }}
+          set_commits: auto
